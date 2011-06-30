@@ -1,5 +1,5 @@
 SOURCES = {'coffeescripts' => 'javascripts', 'spec' => 'spec-js'}
-# To enable libnotify, make sure that
+# To enable libnotify (not required), make sure that
 #   sudo apt-get install libinotify-ruby libgtk2-ruby libnotify-dev
 #    and
 #   gem install libnotify
