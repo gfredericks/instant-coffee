@@ -30,7 +30,7 @@ end
 task :ensure_jcoffeescript => :prepare_tmp do
   Dir.chdir 'tmp' do
     if(Dir.glob('jcoffee*').empty?)
-      `wget https://github.com/downloads/yeungda/jcoffeescript/jcoffeescript-1.0.jar --no-check-certificate`
+      `wget https://github.com/downloads/yeungda/jcoffeescript/jcoffeescript-1.1.jar --no-check-certificate`
     end
   end
 end
@@ -55,7 +55,7 @@ def build(src_path, target_path)
   hash = `sha1sum #{src_path}`.split[0]
   unless(File.exists?('tmp/js_cache/'+hash))
     print "Building #{src_path}..."
-    `java -jar tmp/jcoffeescript-1.0.jar --bare < #{src_path} > tmp/js_cache/#{hash} 2> tmp/jcs.error`
+    `java -jar tmp/jcoffeescript-1.1.jar --bare < #{src_path} > tmp/js_cache/#{hash} 2> tmp/jcs.error`
     e = File.read 'tmp/jcs.error'
     print("\n")
     if(e.strip.empty?)
