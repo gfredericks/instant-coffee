@@ -1,10 +1,12 @@
 SOURCES = {'coffeescripts' => 'javascripts', 'spec' => 'spec-js'}
-
-
 # To enable libnotify, make sure that
 #   sudo apt-get install libinotify-ruby libgtk2-ruby libnotify-dev
 #    and
 #   gem install libnotify
+
+JCOFFEESCRIPT = "https://github.com/downloads/yeungda/jcoffeescript/jcoffeescript-1.1.jar"
+COFFEE_JAR = JCOFFEESCRIPT[/\/([^\/]+)$/, 1]
+
 begin
   require 'rubygems'
   require 'libnotify'
@@ -30,8 +32,15 @@ end
 task :ensure_jcoffeescript => :prepare_tmp do
   Dir.chdir 'tmp' do
     if(Dir.glob('jcoffee*').empty?)
-      `wget https://github.com/downloads/yeungda/jcoffeescript/jcoffeescript-1.1.jar --no-check-certificate`
+      `wget #{JCOFFEESCRIPT} --no-check-certificate`
     end
+  end
+  if(defined? Java)
+    puts "Calling java directly enabled..."
+    require "tmp/#{COFFEE_JAR}"
+    $jcsc = Java::OrgJcoffeescript::JCoffeeScriptCompiler.new([Java::OrgJcoffeescript::Option::BARE])
+  else
+    puts "Not using jruby, will have to shell out..."
   end
 end
 
@@ -55,7 +64,13 @@ def build(src_path, target_path)
   hash = `sha1sum #{src_path}`.split[0]
   unless(File.exists?('tmp/js_cache/'+hash))
     print "Building #{src_path}..."
-    `java -jar tmp/jcoffeescript-1.1.jar --bare < #{src_path} > tmp/js_cache/#{hash} 2> tmp/jcs.error`
+    if($jcsc)
+      coffee = File.read(src_path)
+      js = $jcsc.compile(coffee)
+      open("tmp/js_cache/#{hash}",'w'){|f|f.write(js)}
+    else
+      `java -jar tmp/jcoffeescript-1.1.jar --bare < #{src_path} > tmp/js_cache/#{hash} 2> tmp/jcs.error`
+    end
     e = File.read 'tmp/jcs.error'
     print("\n")
     if(e.strip.empty?)
