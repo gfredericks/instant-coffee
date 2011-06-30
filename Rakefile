@@ -26,7 +26,7 @@ task :clean do
 end
 
 task :prepare_tmp do
-  `mkdir -p tmp/js_cache`
+  `mkdir -p tmp/js_cache tmp/js_error`
 end
 
 task :ensure_jcoffeescript => :prepare_tmp do
@@ -58,44 +58,47 @@ def notify(summary, body)
   if(defined?(Libnotify))
     Libnotify.show :summary => summary, :body => body
   end
+  puts(summary + ": " + body)
 end
 
 def build(src_path, target_path)
   hash = `sha1sum #{src_path}`.split[0]
-  unless(File.exists?('tmp/js_cache/'+hash))
-    print "Building #{src_path}..."
-    if($jcsc)
-      coffee = File.read(src_path)
-      js = $jcsc.compile(coffee)
-      open("tmp/js_cache/#{hash}",'w'){|f|f.write(js)}
-    else
-      `java -jar tmp/jcoffeescript-1.1.jar --bare < #{src_path} > tmp/js_cache/#{hash} 2> tmp/jcs.error`
-    end
-    e = File.read 'tmp/jcs.error'
-    print("\n")
-    if(e.strip.empty?)
-      # Success
-      notify("Coffeescript Built", "Finished compiling #{src_path}")
-    else
-      # Fail
-      notify("Coffeescript ERROR", "Build error in #{src_path}:\n" + e)
-      puts(e)
-      File.delete('tmp/js_cache/'+hash)
-    end
-  else
+  if(File.exists?('tmp/js_cache/'+hash))
     notify("Coffeescript Built", "Built #{src_path} from cache")
-  end
-  src_dir = SOURCES.keys.find{|k|src_path =~ /^#{k}/}
-  if(target_path =~ /^(.*)\/[^\/]+\.js$/)
-    `mkdir -p #{$1}`
-  end
-  File.delete(target_path) if File.exists?(target_path)
-  ab_path = if File.respond_to?(:absolute_path)
-      File.absolute_path('tmp/js_cache/'+hash)
-    else
-      File.expand_path('tmp/js_cache/'+hash)
+  elsif(File.exists?('tmp/js_error/'+hash))
+    s = File.read('tmp/js_error/' + hash)
+    notify("Coffeescript ERROR", "Cached error for #{src_path}:\n" + s)
+  else
+    print "Building #{src_path}..."
+    begin
+      if($jcsc)
+        coffee = File.read(src_path)
+        js = $jcsc.compile(coffee)
+        open("tmp/js_cache/#{hash}",'w'){|f|f.write(js)}
+      else
+        system "java -jar tmp/jcoffeescript-1.1.jar --bare < #{src_path} > tmp/js_cache/#{hash}"
+      end
+      notify("Coffeescript Built", "Finished compiling #{src_path}")
+    rescue Exception => e
+      # Fail
+      File.delete("tmp/js_cache/#{hash}") if File.exists?("tmp/js_cache/#{hash}")
+      notify("Coffeescript ERROR", "Build error in #{src_path}:\n" + e.to_s)
+      open("tmp/js_error/#{hash}", 'w'){|f|f.write e.to_s}
     end
-  File.link(ab_path, target_path)
+  end
+  if(File.exists?("tmp/js_cache/#{hash}"))
+    src_dir = SOURCES.keys.find{|k|src_path =~ /^#{k}/}
+    if(target_path =~ /^(.*)\/[^\/]+\.js$/)
+      `mkdir -p #{$1}`
+    end
+    File.delete(target_path) if File.exists?(target_path)
+    ab_path = if File.respond_to?(:absolute_path)
+        File.absolute_path('tmp/js_cache/'+hash)
+      else
+        File.expand_path('tmp/js_cache/'+hash)
+      end
+    File.link(ab_path, target_path)
+  end
 end
 
 task :build => [:clean, :ensure_jcoffeescript] do
