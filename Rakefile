@@ -60,10 +60,10 @@ def notify(summary, body)
     if(defined?(Libnotify))
       Libnotify.show :summary => summary, :body => body
     end
-    puts(summary + ": " + body)
   rescue Exception => e
     puts "Libnotify could not be called #{e.message}"
   end
+  puts(summary + ": " + body)
 end
 
 def build(src_path, target_path)
