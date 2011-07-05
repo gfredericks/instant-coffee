@@ -10,6 +10,7 @@ COFFEE_JAR = JCOFFEESCRIPT[/\/([^\/]+)$/, 1]
 begin
   require 'rubygems'
   require 'libnotify'
+  require 'digest/sha1'
 rescue Exception
   nil
 end
@@ -55,21 +56,25 @@ def source_files
 end
 
 def notify(summary, body)
-  if(defined?(Libnotify))
-    Libnotify.show :summary => summary, :body => body
+  begin
+    if(defined?(Libnotify))
+      Libnotify.show :summary => summary, :body => body
+    end
+    puts(summary + ": " + body)
+  rescue Exception => e
+    puts "Libnotify could not be called #{e.message}"
   end
-  puts(summary + ": " + body)
 end
 
 def build(src_path, target_path)
-  hash = `sha1sum #{src_path}`.split[0]
+  hash = Digest::SHA1.file(src_path).hexdigest
   if(File.exists?('tmp/js_cache/'+hash))
     notify("Coffeescript Built", "Built #{src_path} from cache")
   elsif(File.exists?('tmp/js_error/'+hash))
     s = File.read('tmp/js_error/' + hash)
     notify("Coffeescript ERROR", "Cached error for #{src_path}:\n" + s)
   else
-    print "Building #{src_path}..."
+    print "Building #{src_path}... to tmp/js_cache/#{hash}"
     begin
       if($jcsc)
         coffee = File.read(src_path)
