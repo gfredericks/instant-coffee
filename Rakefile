@@ -7,10 +7,11 @@ SOURCES = {'coffeescripts' => 'javascripts', 'spec' => 'spec-js'}
 JCOFFEESCRIPT = "https://github.com/downloads/yeungda/jcoffeescript/jcoffeescript-1.1.jar"
 COFFEE_JAR = JCOFFEESCRIPT[/\/([^\/]+)$/, 1]
 
+require 'digest/sha1'
+
 begin
   require 'rubygems'
   require 'libnotify'
-  require 'digest/sha1'
 rescue Exception
   nil
 end
