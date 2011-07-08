@@ -4,10 +4,11 @@ SOURCES = {'coffeescripts' => 'javascripts', 'spec' => 'spec-js'}
 #    and
 #   gem install libnotify
 
-JCOFFEESCRIPT = "https://github.com/downloads/yeungda/jcoffeescript/jcoffeescript-1.1.jar"
+JCOFFEESCRIPT = "http://cloud.github.com/downloads/yeungda/jcoffeescript/jcoffeescript-1.1.jar"
 COFFEE_JAR = JCOFFEESCRIPT[/\/([^\/]+)$/, 1]
 
 require 'digest/sha1'
+require 'net/http'
 
 begin
   require 'rubygems'
@@ -82,6 +83,15 @@ module InstantCoffeeRakeHelper
       File.link(ab_path, target_path)
     end
   end
+
+  # Retrieves uri over https and saves to filename
+  def self.http_get(uri, filename)
+    uri = URI.parse(uri)
+    res = Net::HTTP.start(uri.host, uri.port){|http|
+      http.get uri.path
+    }
+    open(filename,'w'){|f|f.write(res.body)}
+  end
 end
 
 namespace :instant_coffee do
@@ -106,7 +116,7 @@ namespace :instant_coffee do
   task :ensure_jcoffeescript => :prepare_tmp do
     Dir.chdir 'tmp' do
       if(Dir.glob('jcoffee*').empty?)
-        `wget #{JCOFFEESCRIPT} --no-check-certificate`
+        InstantCoffeeRakeHelper.http_get(JCOFFEESCRIPT, COFFEE_JAR)
       end
     end
     if(defined? Java)
