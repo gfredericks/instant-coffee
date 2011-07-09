@@ -144,12 +144,17 @@ namespace :instant_coffee do
     updates = get_updates.call(files.keys)
     files.each_pair{|src,target|InstantCoffeeRakeHelper.build(src,target)}
     while true
-      files = InstantCoffeeRakeHelper.source_files
-      u2 = get_updates.call(files.keys)
+      files2 = InstantCoffeeRakeHelper.source_files
+      u2 = get_updates.call(files2.keys)
       u2.keys.each do |k|
-        InstantCoffeeRakeHelper.build(k, files[k]) unless u2[k] == updates[k]
+        InstantCoffeeRakeHelper.build(k, files2[k]) unless u2[k] == updates[k]
+      end
+      # deleted files
+      (updates.keys - u2.keys).each do |deleted_file|
+        File.delete(files[deleted_file])
       end
       updates = u2
+      files = files2
       sleep(0.3)
     end
   end
