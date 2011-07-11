@@ -67,6 +67,7 @@ module InstantCoffeeRakeHelper
         File.delete("tmp/js_cache/#{hash}") if File.exists?("tmp/js_cache/#{hash}")
         self.notify("Coffeescript ERROR", "Build error in #{src_path}:\n" + e.to_s)
         open("tmp/js_error/#{hash}", 'w'){|f|f.write e.to_s}
+        File.delete(target_path) if File.exists?(target_path)
       end
     end
     if(File.exists?("tmp/js_cache/#{hash}"))
