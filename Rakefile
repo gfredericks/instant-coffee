@@ -100,10 +100,16 @@ namespace :instant_coffee do
   desc "Remove all target directories"
   task :clean do
     SOURCES.values.each do |target_dir|
-      cmd = "rm -rf #{target_dir}"
-      if(File.exists?(target_dir))
-        puts(cmd)
-        system(cmd)
+      if(File.exists? target_dir)
+        Dir.glob(target_dir + '/**/*.js').each{|x|
+          puts("Deleting #{x}...")
+          File.delete(x)
+        }
+        remaining = Dir.entries(target_dir) - ['.','..']
+        if(remaining.empty?)
+          puts("Deleting #{target_dir}")
+          File.delete target_dir
+        end
       end
     end
   end
