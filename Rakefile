@@ -9,6 +9,7 @@ COFFEE_JAR = JCOFFEESCRIPT[/\/([^\/]+)$/, 1]
 
 require 'digest/sha1'
 require 'net/http'
+require 'fileutils'
 
 begin
   require 'rubygems'
@@ -108,7 +109,7 @@ namespace :instant_coffee do
         remaining = Dir.entries(target_dir) - ['.','..']
         if(remaining.empty?)
           puts("Deleting #{target_dir}")
-          File.delete target_dir
+          FileUtils.remove_dir target_dir
         end
       end
     end
@@ -136,7 +137,7 @@ namespace :instant_coffee do
   end
 
   desc "Build all src files"
-  task :build => [:clean, :ensure_jcoffeescript] do
+  task :build => :ensure_jcoffeescript do
     InstantCoffeeRakeHelper.source_files.each_pair do |src,target|
       InstantCoffeeRakeHelper.build(src,target)
     end
