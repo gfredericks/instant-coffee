@@ -77,11 +77,13 @@ module InstantCoffeeRakeHelper
         `mkdir -p #{$1}`
       end
       File.delete(target_path) if File.exists?(target_path)
+      # Have no idea why I wrote the code with two different methods here
       ab_path = if File.respond_to?(:absolute_path)
           File.absolute_path('tmp/js_cache/'+hash)
         else
           File.expand_path('tmp/js_cache/'+hash)
         end
+      FileUtils.touch(ab_path)
       File.link(ab_path, target_path)
     end
   end
