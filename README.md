@@ -19,3 +19,9 @@ compiled into. Once that's setup, the tasks are
 
 It will create a `tmp` directory into which it downloads the JCoffeeScript jar,
 and in which it keeps cached versions of the compiled coffeescript.
+
+## License
+
+Copyright (C) 2011 FIXME
+
+Distributed under the Eclipse Public License, the same as Clojure.
