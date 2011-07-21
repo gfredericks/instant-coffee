@@ -1,0 +1,14 @@
+---
+application: "my_project"
+
+coffeescript:
+  src: "/coffeescripts"
+  target: "/public/javascripts"
+
+haml:
+  src: "/haml-js"
+  target: "/public"
+
+scss:
+  src: "/stylesheets"
+  target: "/public/stylesheets"
