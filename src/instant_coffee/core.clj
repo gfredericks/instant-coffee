@@ -39,7 +39,14 @@
 (def halter (atom nil))
 
 (defn build-and-watch
-  [config])
+  [config]
+  (loop []
+    (if @halter
+      (reset! halter nil)
+      (do
+        (build-once config)
+        (Thread/sleep 250)
+        (recur)))))
 
 (defn -main
   [args]
