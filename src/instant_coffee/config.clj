@@ -3,11 +3,11 @@
   (:require [clj-yaml.core :as yaml]
             [clojure.string :as string]))
 
-(def #^{:dynamic true} *root-dir* ".")
+(def root-dir (atom "."))
 
 (defn file
   [& path-elements]
-  (new File *root-dir* (string/join "/" path-elements)))
+  (new File @root-dir (string/join "/" path-elements)))
 
 (defn read-config-file
   []

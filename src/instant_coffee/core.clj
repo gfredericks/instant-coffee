@@ -36,6 +36,8 @@
         (spit target-file
           (jc/compile-coffee (slurp (file src-dir coffee))))))))
 
+(def halter (atom nil))
+
 (defn build-and-watch
   [config])
 
