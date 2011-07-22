@@ -1,6 +1,7 @@
 (ns instant-coffee.core
   (:import org.apache.commons.io.FileUtils)
-  (:use [instant-coffee.config :only [file]]))
+  (:use [instant-coffee.config :only [file]])
+  (:gen-class))
 
 (defn- single-string-array
   [s]
@@ -10,8 +11,23 @@
 
 (defn source-files
   [suffix dir]
-  ; recurrsive seek
+  ; recursive seek
   (let [prefix-length (inc (count (.getPath (file dir))))]
     (for [file (seq (FileUtils/listFiles (file dir) (single-string-array suffix) true))]
       (let [path (.getPath file)]
         (.substring path prefix-length)))))
+
+
+;; MAIN API
+
+(defn build-once
+  [config])
+
+(defn build-and-watch
+  [config])
+
+(defn -main
+  [args]
+  (let [config (config/read-config-file)]
+    ((if (= (last args) "watch") build-and-watch build-once)
+       config)))
