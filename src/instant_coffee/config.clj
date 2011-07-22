@@ -1,12 +1,13 @@
 (ns instant-coffee.config
   (:import java.io.File)
-  (:require [clj-yaml.core :as yaml]))
+  (:require [clj-yaml.core :as yaml]
+            [clojure.string :as string]))
 
 (def #^{:dynamic true} *root-dir* ".")
 
 (defn file
-  [name]
-  (new File *root-dir* name))
+  [& path-elements]
+  (new File *root-dir* (string/join "/" path-elements)))
 
 (defn read-config-file
   []

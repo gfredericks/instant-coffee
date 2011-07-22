@@ -11,4 +11,4 @@
 (def-fs-test basic-coffee-compile-test
   (-main [])
   (doseq [filename ["foo" "bar" "baz/booje"]]
-    (is (.exists (file (str "public/javascripts/" filename ".js"))))))
+    (is (.exists (file "public/javascripts" (str filename ".js"))))))

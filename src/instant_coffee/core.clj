@@ -1,5 +1,7 @@
 (ns instant-coffee.core
-  (:require [instant-coffee.config :as config])
+  (:require [instant-coffee.config :as config]
+            [instant-coffee.jcoffeescript :as jc])
+  (:require [clojure.string :as string])
   (:import org.apache.commons.io.FileUtils)
   (:use [instant-coffee.config :only [file]])
   (:gen-class))
@@ -22,7 +24,17 @@
 ;; MAIN API
 
 (defn build-once
-  [config])
+  [config]
+  (let [{{src-dir :src, target-dir :target} :coffeescript} config,
+        coffees (source-files "coffee" src-dir)]
+    (doseq [coffee coffees]
+      (let [target-filename (string/replace coffee #"\.coffee$" ".js"),
+            target-file (file target-dir target-filename),
+            target-dir (.getParentFile target-file)]
+        (when-not (.exists target-dir)
+          (.mkdirs target-dir))
+        (spit target-file
+          (jc/compile-coffee (slurp (file src-dir coffee))))))))
 
 (defn build-and-watch
   [config])
