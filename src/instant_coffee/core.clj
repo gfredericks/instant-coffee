@@ -1,4 +1,5 @@
 (ns instant-coffee.core
+  (:require [instant-coffee.config :as config])
   (:import org.apache.commons.io.FileUtils)
   (:use [instant-coffee.config :only [file]])
   (:gen-class))
