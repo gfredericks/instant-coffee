@@ -1,6 +1,4 @@
 ---
-application: "my_project"
-
 coffeescript:
   src: "/coffeescripts"
   target: "/public/javascripts"

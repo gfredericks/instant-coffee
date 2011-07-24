@@ -23,13 +23,22 @@
   []
   (System/currentTimeMillis))
 
+(defmulti subcompiler
+  "Given a keyword (the key in the config file) and an object (the value
+  in the config file), returns an iteration function."
+  (comp first list))
+
 (defn config-to-iteration
   "Given a configuration map, returns a function that can be called repeatedly
-  for watching, or once for build-once.
-
-  For the moment only deals with coffeescript."
+  for watching, or once for build-once."
   [config]
-  (let [{{src-dir :src, target-dir :target} :coffeescript} config,
+  (let [fns (for [[k v] config] (subcompiler k v))]
+    (fn []
+      (doseq [f fns] (f)))))
+
+(defmethod subcompiler :coffeescript
+  [_ coffee-config]
+  (let [{src-dir :src, target-dir :target} coffee-config,
         last-compiled (atom {})]
     (fn []
       (let [srcs (set (source-files "coffee" src-dir))
@@ -52,3 +61,16 @@
             (when (.exists target-file)
               (.delete target-file))
             (swap! last-compiled dissoc coffee)))))))
+
+(defmethod subcompiler :haml
+  [_ haml-config]
+  (constantly nil))
+
+(defmethod subcompiler :scss
+  [_ scss-config]
+  (constantly nil))
+
+(defmethod subcompiler :default
+  [k v]
+  (println (format "Warning: no implementation for configuration %s" (name k)))
+  (constantly nil))

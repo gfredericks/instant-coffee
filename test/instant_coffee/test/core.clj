@@ -18,7 +18,7 @@
     (is (.exists tgt))
     (is (re-find #"Wallaby" (slurp tgt)))
     (spit (file "coffeescripts/fumble.coffee") "x = 'Horton'")
-    (Thread/sleep 3000)
+    (Thread/sleep 4000)
     (is (.exists tgt))
     (is (not (re-find #"Wallaby" (slurp tgt))))
     (is (re-find #"Horton" (slurp tgt)))))
