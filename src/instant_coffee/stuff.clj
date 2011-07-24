@@ -41,7 +41,7 @@
 
 (defn round-down-milliseconds
   [m]
-  (- m (rem m 1000)))
+  (- m (rem m 1000) 1))
 
 (defmethod subcompiler :coffeescript
   [_ coffee-config]
@@ -72,7 +72,9 @@
         (doseq [coffee srcs]
           (let [src-file (file src-dir coffee)]
             (when (or (nil? (last-compiled coffee))
-                    (FileUtils/isFileNewer src-file (round-down-milliseconds (last-compiled coffee))))
+                    (FileUtils/isFileNewer
+                      src-file
+                      (round-down-milliseconds (last-compiled coffee))))
               (let [target-filename (string/replace coffee #"\.coffee$" ".js"),
                     target-file (file target-dir target-filename),
                     slurped-at (now)]
