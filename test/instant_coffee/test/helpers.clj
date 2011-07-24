@@ -1,6 +1,7 @@
 (ns instant-coffee.test.helpers
   (:import org.apache.commons.io.FileUtils)
-  (:import java.io.File)
+  (:import java.io.File
+           java.io.StringWriter)
   (:use instant-coffee.config
         instant-coffee.core)
   (:use [clojure.contrib.java-utils :only [delete-file-recursively]])
@@ -41,15 +42,25 @@
     (if (instance? Throwable v)
       (throw v))))
 
+(def *watcher-output* nil)
+
+(defn check-and-clear-output
+  [re]
+  (let [b (.getBuffer *watcher-output*),
+        s (str b)]
+    (is (re-find re s))
+    (.delete b 0 (count s))))
+
 (defn fs-watcher-test
   [f]
   (fs-test
     (fn []
-      (.start (new Thread (fn [] (-main "watch"))))
-      (try
-        (f)
-        (finally
-          (finish-watching))))))
+      (let [sw (new StringWriter)]
+        (.start (new Thread (fn [] (binding [*out* sw] (-main "watch")))))
+        (try
+          (binding [*watcher-output* sw] (f))
+          (finally
+            (finish-watching)))))))
 
 (defmacro def-watcher-test
   [name & body]
