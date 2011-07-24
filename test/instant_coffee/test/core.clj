@@ -31,3 +31,15 @@
     (.delete (file "coffeescripts/bar.coffee"))
     (Thread/sleep 1000)
     (is (not (.exists tgt)))))
+
+(def-watcher-test compile-error-test
+  (Thread/sleep 2000)
+  (let [src (file "coffeescripts/bar.coffee"),
+        tgt (file "public/javascripts/bar.js")]
+    (is (.exists tgt))
+    (spit src "hu === ? * 98329873#&*38799872")
+    (Thread/sleep 800)
+    (is (not (.exists tgt)))
+    (spit tgt "x = 'foo'")
+    (Thread/sleep 800)
+    (is (.exists tgt))))
