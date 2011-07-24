@@ -1,4 +1,24 @@
-(ns instant-coffee.cache)
+(ns instant-coffee.cache
+  (:import java.security.MessageDigest))
+
+(def hexes "0123456789abcdef")
+
+(defn byte-to-hex-string
+  [b]
+  (let [lower (bit-and b 15),
+        upper (bit-and (bit-shift-right b 4) 15)]
+    (str (nth hexes upper) (nth hexes lower))))
+
+(defn byte-array-to-hex-string
+  [ba]
+  (apply str (map byte-to-hex-string (seq ba))))
+
+(defn sha1
+  [s]
+  (let [md (MessageDigest/getInstance "SHA-1")]
+    (.update md (.getBytes s "iso-8859-1") 0 (count s))
+    (byte-array-to-hex-string (.digest md))))
+
 
 (defprotocol ICache
   (cache-get       [this key] "Retrieves the compiled code based on the source's hash")
