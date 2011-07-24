@@ -1,6 +1,7 @@
 (ns instant-coffee.core
   (:require [instant-coffee.config :as config]
             [instant-coffee.stuff :as stuff])
+  (:use [slingshot.core :only [try+]])
   (:gen-class))
 
 ;; MAIN API
@@ -23,7 +24,11 @@
       (reset! halter nil))))
 
 (defn -main
-  [args]
-  (let [config (config/read-config-file)]
-    ((if (= (last args) "watch") build-and-watch build-once)
-       (stuff/config-to-iteration config))))
+  [& [args]]
+  (try+
+    (let [config (config/read-config-file)]
+      ((if (= (last args) "watch") build-and-watch build-once)
+         (stuff/config-to-iteration config)))
+    (catch
+      #{:missing-config} _
+      (println "Could not find a config.yml!"))))
