@@ -14,11 +14,11 @@
   (let [tgt (file "public/javascripts/fumble.js")]
     (is (not (.exists tgt)))
     (spit (file "coffeescripts/fumble.coffee") "x = 'Wallaby'")
-    (Thread/sleep 3500)
+    (Thread/sleep 2000)
     (is (.exists tgt))
     (is (re-find #"Wallaby" (slurp tgt)))
     (spit (file "coffeescripts/fumble.coffee") "x = 'Horton'")
-    (Thread/sleep 4000)
+    (Thread/sleep 1500)
     (is (.exists tgt))
     (is (not (re-find #"Wallaby" (slurp tgt))))
     (is (re-find #"Horton" (slurp tgt)))))
