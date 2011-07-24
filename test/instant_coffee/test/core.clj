@@ -26,3 +26,12 @@
     (is (.exists tgt))
     (is (not (re-find #"Wallaby" (slurp tgt))))
     (is (re-find #"Horton" (slurp tgt)))))
+
+(def-watcher-test deleting-test
+  (Thread/sleep 2000)
+  (let [tgt (file "public/javascripts/bar.js")]
+    (is (.exists tgt))
+    (is (.exists (file "coffeescripts/bar.coffee")))
+    (.delete (file "coffeescripts/bar.coffee"))
+    (Thread/sleep 1000)
+    (is (not (.exists tgt)))))
