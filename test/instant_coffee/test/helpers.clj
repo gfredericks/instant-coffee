@@ -27,11 +27,19 @@
 
 (defn- finish-watching
   []
-  (reset! halter true)
+  (swap! watcher-status
+    (fn [v]
+      (if (nil? v)
+        :quit
+        v)))
   (loop []
-    (when @halter
+    (when (= :quit @watcher-status)
       (Thread/sleep 50)
-      (recur))))
+      (recur)))
+  (let [v @watcher-status]
+    (reset! watcher-status nil)
+    (if (instance? Throwable v)
+      (throw v))))
 
 (defn fs-watcher-test
   [f]

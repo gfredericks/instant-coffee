@@ -10,18 +10,21 @@
   [iteration]
   (iteration))
 
-(def halter (atom nil))
+; This atom and the associated code are used just for testing,
+; where we run the watcher on a separate thread
+(def watcher-status (atom nil))
 
 (defn build-and-watch
   [iteration]
   (try
     (loop []
-      (when-not @halter
+      (when-not (= :quit @watcher-status)
         (iteration)
         (Thread/sleep 250)
         (recur)))
-    (finally
-      (reset! halter nil))))
+    (reset! watcher-status nil)
+    (catch Throwable e
+      (reset! watcher-status e))))
 
 (defn -main
   [& args]
