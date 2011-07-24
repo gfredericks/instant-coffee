@@ -47,6 +47,8 @@
           (let [src-file (file src-dir coffee)]
             (when (or (nil? (@last-compiled coffee))
                       (FileUtils/isFileNewer src-file (@last-compiled coffee)))
+              (print (format "Compiling %s..." coffee))
+              (.flush *out*)
               (let [target-filename (string/replace coffee #"\.coffee$" ".js"),
                     target-file (file target-dir target-filename),
                     target-dir (.getParentFile target-file),
@@ -56,10 +58,13 @@
                 (when-not (.exists target-dir)
                   (.mkdirs target-dir))
                 (spit target-file compiled)
-                (swap! last-compiled assoc coffee slurped-at)))))
+                (swap! last-compiled assoc coffee slurped-at))
+              (print "\n")
+              (.flush *out*))))
         (doseq [coffee deleted-srcs]
           (let [target-file (file target-dir (string/replace coffee #"\.coffee$" ".js"))]
             (when (.exists target-file)
+              (println (format "Deleting %s..." coffee))
               (.delete target-file))
             (swap! last-compiled dissoc coffee)))))))
 
