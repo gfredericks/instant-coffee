@@ -39,6 +39,7 @@
     (is (.exists tgt))
     (spit src "hu === ? * 98329873#&*38799872")
     (Thread/sleep 800)
+    (check-and-clear-output #"Error!")
     (is (not (.exists tgt)))
     (spit tgt "x = 'foo'")
     (Thread/sleep 800)
