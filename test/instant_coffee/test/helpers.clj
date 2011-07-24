@@ -25,14 +25,23 @@
   [name & body]
   `(deftest ~name (fs-test (fn [] ~@body))))
 
+(defn- finish-watching
+  []
+  (reset! halter true)
+  (loop []
+    (when @halter
+      (Thread/sleep 50)
+      (recur))))
+
 (defn fs-watcher-test
   [f]
   (fs-test
     (fn []
-      (.start (new Thread (fn [] (-main (read-config-file)))))
+      (.start (new Thread (fn [] (-main ["watch"]))))
       (try
         (f)
-        (finally (reset! halter true))))))
+        (finally
+          (finish-watching))))))
 
 (defmacro def-watcher-test
   [name & body]

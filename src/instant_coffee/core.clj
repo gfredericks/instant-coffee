@@ -30,23 +30,25 @@
     (doseq [coffee coffees]
       (let [target-filename (string/replace coffee #"\.coffee$" ".js"),
             target-file (file target-dir target-filename),
-            target-dir (.getParentFile target-file)]
+            target-dir (.getParentFile target-file),
+            src (slurp (file src-dir coffee)),
+            compiled (jc/compile-coffee src)]
         (when-not (.exists target-dir)
           (.mkdirs target-dir))
-        (spit target-file
-          (jc/compile-coffee (slurp (file src-dir coffee))))))))
+        (spit target-file compiled)))))
 
 (def halter (atom nil))
 
 (defn build-and-watch
   [config]
-  (loop []
-    (if @halter
-      (reset! halter nil)
-      (do
+  (try
+    (loop []
+      (when-not @halter
         (build-once config)
         (Thread/sleep 250)
-        (recur)))))
+        (recur)))
+    (finally
+      (reset! halter nil))))
 
 (defn -main
   [args]
