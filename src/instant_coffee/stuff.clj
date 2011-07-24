@@ -1,6 +1,7 @@
 (ns instant-coffee.stuff
   (:require [instant-coffee.jcoffeescript :as jc])
   (:import org.apache.commons.io.FileUtils)
+  (:import org.jcoffeescript.JCoffeeScriptCompileException)
   (:require [clojure.string :as string]
             [clojure.set :as sets])
   (:use [instant-coffee.config :only [file]]))
@@ -47,20 +48,26 @@
           (let [src-file (file src-dir coffee)]
             (when (or (nil? (@last-compiled coffee))
                       (FileUtils/isFileNewer src-file (@last-compiled coffee)))
-              (print (format "Compiling %s..." coffee))
-              (.flush *out*)
               (let [target-filename (string/replace coffee #"\.coffee$" ".js"),
                     target-file (file target-dir target-filename),
-                    target-dir (.getParentFile target-file),
-                    slurped-at (now),
-                    src (slurp (file src-dir coffee)),
-                    compiled (jc/compile-coffee src)]
-                (when-not (.exists target-dir)
-                  (.mkdirs target-dir))
-                (spit target-file compiled)
-                (swap! last-compiled assoc coffee slurped-at))
-              (print "\n")
-              (.flush *out*))))
+                    slurped-at (now)]
+                (try
+                  (print (format "Compiling %s..." coffee))
+                  (.flush *out*)
+                  (let [target-dir (.getParentFile target-file),
+                        src (slurp (file src-dir coffee)),
+                        compiled (jc/compile-coffee src)]
+                    (when-not (.exists target-dir)
+                      (.mkdirs target-dir))
+                    (spit target-file compiled)
+                    (swap! last-compiled assoc coffee slurped-at))
+                  (print "\n")
+                  (.flush *out*)
+                  (catch JCoffeeScriptCompileException e
+                    (println "Error! " (str e))
+                    (swap! last-compiled assoc coffee slurped-at)
+                    (if (.exists target-file)
+                      (.delete target-file))))))))
         (doseq [coffee deleted-srcs]
           (let [target-file (file target-dir (string/replace coffee #"\.coffee$" ".js"))]
             (when (.exists target-file)
