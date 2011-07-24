@@ -50,12 +50,13 @@
               (let [target-filename (string/replace coffee #"\.coffee$" ".js"),
                     target-file (file target-dir target-filename),
                     target-dir (.getParentFile target-file),
+                    slurped-at (now),
                     src (slurp (file src-dir coffee)),
                     compiled (jc/compile-coffee src)]
                 (when-not (.exists target-dir)
                   (.mkdirs target-dir))
-                (spit target-file compiled))
-              (swap! last-compiled assoc coffee (now)))))
+                (spit target-file compiled)
+                (swap! last-compiled assoc coffee slurped-at)))))
         (doseq [coffee deleted-srcs]
           (let [target-file (file target-dir (string/replace coffee #"\.coffee$" ".js"))]
             (when (.exists target-file)

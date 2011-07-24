@@ -24,7 +24,7 @@
       (reset! halter nil))))
 
 (defn -main
-  [& [args]]
+  [& args]
   (try+
     (let [config (config/read-config-file)]
       ((if (= (last args) "watch") build-and-watch build-once)

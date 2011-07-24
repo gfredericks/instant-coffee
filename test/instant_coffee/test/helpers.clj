@@ -37,7 +37,7 @@
   [f]
   (fs-test
     (fn []
-      (.start (new Thread (fn [] (-main ["watch"]))))
+      (.start (new Thread (fn [] (-main "watch"))))
       (try
         (f)
         (finally
