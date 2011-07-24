@@ -20,31 +20,47 @@
       (let [path (.getPath file)]
         (.substring path prefix-length)))))
 
+(defn- now
+  []
+  (System/currentTimeMillis))
+
+(defn config-to-iteration
+  "Given a configuration map, returns a function that can be called repeatedly
+  for watching, or once for build-once.
+
+  For the moment only deals with coffeescript."
+  [config]
+  (let [{{src-dir :src, target-dir :target} :coffeescript} config,
+        last-compiled (atom {})]
+    (fn []
+      (doseq [coffee (source-files "coffee" src-dir)]
+        (let [src-file (file src-dir coffee)]
+          (when (or (nil? (@last-compiled coffee))
+                    (FileUtils/isFileNewer src-file (@last-compiled coffee)))
+            (let [target-filename (string/replace coffee #"\.coffee$" ".js"),
+                  target-file (file target-dir target-filename),
+                  target-dir (.getParentFile target-file),
+                  src (slurp (file src-dir coffee)),
+                  compiled (jc/compile-coffee src)]
+              (when-not (.exists target-dir)
+                (.mkdirs target-dir))
+              (spit target-file compiled))
+            (swap! last-compiled assoc coffee (now))))))))
 
 ;; MAIN API
 
 (defn build-once
-  [config]
-  (let [{{src-dir :src, target-dir :target} :coffeescript} config,
-        coffees (source-files "coffee" src-dir)]
-    (doseq [coffee coffees]
-      (let [target-filename (string/replace coffee #"\.coffee$" ".js"),
-            target-file (file target-dir target-filename),
-            target-dir (.getParentFile target-file),
-            src (slurp (file src-dir coffee)),
-            compiled (jc/compile-coffee src)]
-        (when-not (.exists target-dir)
-          (.mkdirs target-dir))
-        (spit target-file compiled)))))
+  [iteration]
+  (iteration))
 
 (def halter (atom nil))
 
 (defn build-and-watch
-  [config]
+  [iteration]
   (try
     (loop []
       (when-not @halter
-        (build-once config)
+        (iteration)
         (Thread/sleep 250)
         (recur)))
     (finally
@@ -54,4 +70,4 @@
   [args]
   (let [config (config/read-config-file)]
     ((if (= (last args) "watch") build-and-watch build-once)
-       config)))
+       (config-to-iteration config))))
