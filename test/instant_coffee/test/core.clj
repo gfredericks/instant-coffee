@@ -4,10 +4,6 @@
         instant-coffee.config
         instant-coffee.core))
 
-(def-fs-test source-files-test
-  (is (= (sort (source-files "coffee" "coffeescripts"))
-         (sort ["foo.coffee" "bar.coffee" "baz/booje.coffee"]))))
-
 (def-fs-test basic-coffee-compile-test
   (spit (file "coffeescripts/fumble.coffee") "x = 'Wallaby'")
   (-main [])
@@ -22,7 +18,7 @@
     (is (.exists tgt))
     (is (re-find #"Wallaby" (slurp tgt)))
     (spit (file "coffeescripts/fumble.coffee") "x = 'Horton'")
-    (Thread/sleep 2000)
+    (Thread/sleep 3000)
     (is (.exists tgt))
     (is (not (re-find #"Wallaby" (slurp tgt))))
     (is (re-find #"Horton" (slurp tgt)))))
