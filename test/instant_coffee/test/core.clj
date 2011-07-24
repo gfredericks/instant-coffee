@@ -18,7 +18,7 @@
   (let [tgt (file "public/javascripts/fumble.js")]
     (is (not (.exists tgt)))
     (spit (file "coffeescripts/fumble.coffee") "x = 'Wallaby'")
-    (Thread/sleep 2000)
+    (Thread/sleep 3500)
     (is (.exists tgt))
     (is (re-find #"Wallaby" (slurp tgt)))
     (spit (file "coffeescripts/fumble.coffee") "x = 'Horton'")
