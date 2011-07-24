@@ -4,8 +4,9 @@
   (:import org.jcoffeescript.JCoffeeScriptCompileException)
   (:require [clojure.string :as string]
             [clojure.set :as sets])
+  (:use slingshot.core)
   (:use [instant-coffee.config :only [file]]
-        [instant-coffee.cache :only [sha1]]))
+        instant-coffee.cache))
 
 (defn- single-string-array
   [s]
@@ -47,7 +48,24 @@
   (let [{src-dir :src, target-dir :target} coffee-config,
         last-compiled* (atom {}),
         last-compiled (fn [filename] (-> last-compiled* deref (get filename) first)),
-        last-compiled-value (fn [filename] (-> last-compiled* deref (get filename) second))]
+        last-compiled-value (fn [filename] (-> last-compiled* deref (get filename) second)),
+        compiler-cache (create-memcache),
+        maybe-compile
+          (fn [src src-hash]
+            (let [v (cache-get compiler-cache src-hash)]
+              (cond
+                (:code v)
+                  (:code v)
+                (:error v)
+                  (throw+ {:compile (:error v)})
+                :else
+                  (try
+                    (let [v (jc/compile-coffee src)]
+                      (cache-set compiler-cache src-hash v)
+                      v)
+                    (catch JCoffeeScriptCompileException e
+                      (cache-set-error compiler-cache src-hash (.getMessage e))
+                      (throw+ {:compile (.getMessage e)}))))))]
     (fn []
       (let [srcs (set (source-files "coffee" src-dir))
             deleted-srcs (sets/difference (-> last-compiled* deref keys set) srcs)]
@@ -58,9 +76,7 @@
               (let [target-filename (string/replace coffee #"\.coffee$" ".js"),
                     target-file (file target-dir target-filename),
                     slurped-at (now)]
-                (try
-                  (print (format "Compiling %s..." coffee))
-                  (.flush *out*)
+                (try+
                   (let [target-dir (.getParentFile target-file),
                         src (slurp (file src-dir coffee)),
                         hashed-src (sha1 src)]
@@ -68,11 +84,13 @@
                       (when-not (.exists target-dir)
                         (.mkdirs target-dir))
                       (swap! last-compiled* assoc coffee [slurped-at hashed-src])
-                      (spit target-file (jc/compile-coffee src))))
-                  (print "\n")
-                  (.flush *out*)
-                  (catch JCoffeeScriptCompileException e
-                    (println "Error! " (str e))
+                      (print (format "Compiling %s..." coffee))
+                      (.flush *out*)
+                      (spit target-file (maybe-compile src hashed-src))
+                      (print "\n")
+                      (.flush *out*)))
+                  (catch #(and (map? %) (contains? % :compile)) {msg :compile}
+                    (println "Error! " msg)
                     (if (.exists target-file)
                       (.delete target-file))))))))
         (doseq [coffee deleted-srcs]

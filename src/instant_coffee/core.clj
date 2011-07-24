@@ -16,6 +16,7 @@
 
 (defn build-and-watch
   [iteration]
+  (println "I'm watching you...")
   (try
     (loop []
       (when-not (= :quit @watcher-status)
