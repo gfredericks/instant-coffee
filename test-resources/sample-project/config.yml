@@ -4,8 +4,8 @@ coffeescript:
   target: "/public/javascripts"
 
 haml:
-  src: "/haml-js"
-  target: "/public"
+  src: "/templates"
+  target-file: "/public/templates.js"
 
 scss:
   src: "/stylesheets"

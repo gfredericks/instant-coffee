@@ -1,5 +1,6 @@
 (ns instant-coffee.stuff
-  (:require [instant-coffee.jcoffeescript :as jc])
+  (:require [instant-coffee.jcoffeescript :as jc]
+            [instant-coffee.haml-js :as haml])
   (:import org.apache.commons.io.FileUtils)
   (:import org.jcoffeescript.JCoffeeScriptCompileException)
   (:require [clojure.string :as string]
@@ -7,6 +8,11 @@
   (:use slingshot.core)
   (:use [instant-coffee.config :only [file]]
         instant-coffee.cache))
+
+(defn- print-and-flush
+  [s]
+  (print s)
+  (.flush *out*))
 
 (defn- single-string-array
   [s]
@@ -100,32 +106,68 @@
     (file-watcher
       src-dir
       (partial source-files "coffee" src-dir)
-      (fn [coffee src]
-        (let [target-filename (string/replace coffee #"\.coffee$" ".js"),
+      (fn [filename src]
+        (let [target-filename (string/replace filename #"\.coffee$" ".js"),
               target-file (file target-dir target-filename)]
           (try+
             (let [target-dir (.getParentFile target-file),
                   hashed-src (sha1 src)]
               (when-not (.exists target-dir)
                 (.mkdirs target-dir))
-              (print (format "Compiling %s..." coffee))
-              (.flush *out*)
+              (print-and-flush (format "Compiling %s..." filename))
               (spit target-file (maybe-compile src hashed-src))
-              (print "\n")
-              (.flush *out*))
+              (print-and-flush "\n"))
             (catch #(and (map? %) (contains? % :compile)) {msg :compile}
               (println "Error! " msg)
               (if (.exists target-file)
                 (.delete target-file))))))
-      (fn [coffee]
-        (let [target-file (file target-dir (string/replace coffee #"\.coffee$" ".js"))]
+      (fn [filename]
+        (let [target-file (file target-dir (string/replace filename #"\.coffee$" ".js"))]
           (when (.exists target-file)
-            (println (format "Deleting %s..." coffee))
+            (println (format "Deleting %s..." filename))
             (.delete target-file)))))))
+
+(defn- templates-to-js-object-literal
+  [compilations]
+  (let [nested-compilations
+          (reduce
+            (fn [m [filename js]]
+              (assoc-in m (string/split filename #"/") js))
+            {}
+            compilations),
+        to-literal
+          (fn to-literal
+            [m]
+            (if (string? m)
+              m
+              (str
+                "{"
+                (string/join ","
+                  (for [[k v] m]
+                    (format "%s : %s" (pr-str k) (to-literal v))))
+                "}")))]
+    (format "Templates = %s;" (to-literal nested-compilations))))
 
 (defmethod subcompiler :haml
   [_ haml-config]
-  (constantly nil))
+  (let [{src-dir :src, target-filename :target-file} haml-config,
+        target-file (file target-filename),
+        compilations (atom {})
+        write-to-file
+          (fn []
+            (spit target-file (templates-to-js-object-literal @compilations)))]
+    (file-watcher
+      src-dir
+      (partial source-files "js.haml" src-dir)
+      (fn [filename src]
+        (print-and-flush (format "Compiling %s..." filename))
+        (swap! compilations assoc filename (haml/compile-to-js src))
+        (write-to-file)
+        (print-and-flush "\n"))
+      (fn [filename]
+        (println (format "Deleting %s..." filename))
+        (swap! compilations dissoc filename)
+        (write-to-file)))))
 
 (defmethod subcompiler :scss
   [_ scss-config]

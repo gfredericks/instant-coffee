@@ -31,3 +31,7 @@
                   nil)]
         (Context/exit)
         ret))))
+
+(defn compile-to-js
+  [s]
+  (format "function(_ob){with(_ob){return %s}}" (compile-haml s)))
