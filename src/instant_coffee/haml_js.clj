@@ -25,7 +25,7 @@
       (let [ret (.evaluateString
                   context
                   compile-scope
-                  "Haml.compile(hamlSource);"
+                  "Haml.optimize(Haml.compile(hamlSource));"
                   "HamlCompiler"
                   0
                   nil)]
