@@ -12,7 +12,7 @@
 
 (defn read-config-file
   []
-  (let [f (file "config.yml")]
-    (if (.exists f)
-      (yaml/parse-string (slurp (file "config.yml")))
+  (let [f (first (filter #(.exists %) [(file "config.yml") (file "config/instant_coffee.yml")]))]
+    (if f
+      (yaml/parse-string (slurp f))
       (throw+ :missing-config))))
