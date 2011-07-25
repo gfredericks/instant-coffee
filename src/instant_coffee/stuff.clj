@@ -122,9 +122,10 @@
               (if (.exists target-file)
                 (.delete target-file))))))
       (fn [filename]
-        (let [target-file (file target-dir (string/replace filename #"\.coffee$" ".js"))]
+        (let [target-file-name (string/replace filename #"\.coffee$" ".js")
+              target-file (file target-dir target-file-name)]
           (when (.exists target-file)
-            (println (format "Deleting %s..." filename))
+            (println (format "Deleting %s..." target-file-name))
             (.delete target-file)))))))
 
 (defn- templates-to-js-object-literal
