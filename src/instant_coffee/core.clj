@@ -32,7 +32,7 @@
 (defn -main
   [& args]
   (try+
-    (let [config (config/read-config-file)]
+    (let [config (:source_groups (config/read-config-file))]
       ((if (= (last args) "watch") build-and-watch build-once)
          (stuff/config-to-iteration config)))
     (catch
