@@ -124,6 +124,9 @@
             (.delete target-file)))))))
 
 (defn- templates-to-js-object-literal
+  "Takes a map from relative filenames to function-literal-strings,
+  and produces an object literal, where nested directories are mapped
+  to nested properties."
   [compilations]
   (let [nested-compilations
           (reduce

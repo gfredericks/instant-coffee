@@ -7,6 +7,7 @@
 ;; MAIN API
 
 (defn build-once
+  "Just calls the iteration function."
   [iteration]
   (iteration))
 
@@ -15,6 +16,7 @@
 (def watcher-status (atom nil))
 
 (defn build-and-watch
+  "Takes the iteration function and calls it once every quarter second."
   [iteration]
   (println "I'm watching you...")
   (try
