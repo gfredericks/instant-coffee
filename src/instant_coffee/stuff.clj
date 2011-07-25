@@ -23,10 +23,13 @@
 (defn source-files
   [suffix dir]
   ; recursive seek
-  (let [prefix-length (inc (count (.getPath (file dir))))]
-    (for [file (seq (FileUtils/listFiles (file dir) (single-string-array suffix) true))]
-      (let [path (.getPath file)]
-        (.substring path prefix-length)))))
+  (let [dir-file (file dir),
+        prefix-length (inc (count (.getPath dir-file)))]
+    (if (.exists dir-file)
+      (for [file (seq (FileUtils/listFiles (file dir) (single-string-array suffix) true))]
+        (let [path (.getPath file)]
+          (.substring path prefix-length)))
+      [])))
 
 (defmulti subcompiler
   "Given a keyword (the key in the config file) and an object (the value
