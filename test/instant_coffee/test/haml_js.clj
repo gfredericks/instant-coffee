@@ -4,3 +4,7 @@
 
 (deftest it-works-test
   (is (compile-haml "%hr")))
+
+(deftest attribute-expressions-test
+  (let [js (compile-haml "%span(foo=bar)")]
+    (is (= js "\"<span foo=\\\"\" + bar + \"\\\">\" + \n\"</span>\""))))
