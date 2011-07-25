@@ -32,6 +32,8 @@ var Haml;
 
   var matchers, self_close_tags, embedder, forceXML, escaperName, escapeHtmlByDefault;
 
+  escaperName = "(function(x){return x;})";
+
   function html_escape(text) {
     return (text + "").
       replace(/&/g, "&amp;").

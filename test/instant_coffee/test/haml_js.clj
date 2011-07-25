@@ -7,4 +7,4 @@
 
 (deftest attribute-expressions-test
   (let [js (compile-haml "%span(foo=bar)")]
-    (is (= js "\"<span foo=\\\"\" + bar + \"\\\">\" + \n\"</span>\""))))
+    (is (= js "\"<span foo=\\\"\" + (function(x){return x;})(bar) + \"\\\">\" + \n\"</span>\""))))
