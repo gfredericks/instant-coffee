@@ -144,7 +144,9 @@
                 "{"
                 (string/join ","
                   (for [[k v] m]
-                    (format "%s : %s" (pr-str k) (to-literal v))))
+                    (format "%s : %s"
+                      (->> k (re-matches #"(.*?)(\.js\.haml)?") second pr-str)
+                      (to-literal v))))
                 "}")))]
     (format "Templates = %s;" (to-literal nested-compilations))))
 
