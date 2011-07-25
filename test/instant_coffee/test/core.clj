@@ -35,6 +35,7 @@
     (is (.exists (file "coffeescripts/bar.coffee")))
     (.delete (file "coffeescripts/bar.coffee"))
     (Thread/sleep 800)
+    (check-and-clear-output #"Deleting bar.js")
     (is (not (.exists tgt)))))
 
 (def-watcher-test compile-error-test
