@@ -43,29 +43,32 @@
   [m]
   (- m (rem m 1000) 1))
 
+(defn- create-cached-coffeescript-compiler
+  []
+  (let [cache (create-memcache)]
+    (fn [src src-hash]
+      (let [v (cache-get cache src-hash)]
+        (cond
+          (:code v)
+            (:code v)
+          (:error v)
+            (throw+ {:compile (:error v)})
+          :else
+            (try
+              (let [v (jc/compile-coffee src)]
+                (cache-set cache src-hash v)
+                v)
+              (catch JCoffeeScriptCompileException e
+                (cache-set-error cache src-hash (.getMessage e))
+                (throw+ {:compile (.getMessage e)}))))))))
+
 (defmethod subcompiler :coffeescript
   [_ coffee-config]
   (let [{src-dir :src, target-dir :target} coffee-config,
         last-compiled* (atom {}),
         last-compiled (fn [filename] (-> last-compiled* deref (get filename) first)),
         last-compiled-value (fn [filename] (-> last-compiled* deref (get filename) second)),
-        compiler-cache (create-memcache),
-        maybe-compile
-          (fn [src src-hash]
-            (let [v (cache-get compiler-cache src-hash)]
-              (cond
-                (:code v)
-                  (:code v)
-                (:error v)
-                  (throw+ {:compile (:error v)})
-                :else
-                  (try
-                    (let [v (jc/compile-coffee src)]
-                      (cache-set compiler-cache src-hash v)
-                      v)
-                    (catch JCoffeeScriptCompileException e
-                      (cache-set-error compiler-cache src-hash (.getMessage e))
-                      (throw+ {:compile (.getMessage e)}))))))]
+        maybe-compile (create-cached-coffeescript-compiler)]
     (fn []
       (let [srcs (set (source-files "coffee" src-dir))
             deleted-srcs (sets/difference (-> last-compiled* deref keys set) srcs)]
