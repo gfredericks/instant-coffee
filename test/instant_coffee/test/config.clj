@@ -4,6 +4,6 @@
         instant-coffee.config))
 
 (def-fs-test config-file-read-test
-  (let [m (read-config-file)]
-    (is (:coffeescript m))
-    (is (:haml m))))
+  (let [configs (read-config-file)]
+    (is (some #(= "coffeescript" (:type %)) configs))
+    (is (some #(= "haml" (:type %)) configs))))

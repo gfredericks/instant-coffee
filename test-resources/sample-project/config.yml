@@ -1,12 +1,17 @@
 ---
-coffeescript:
+-
+  type: coffeescript
   src: "/coffeescripts"
   target: "/public/javascripts"
-
-haml:
+-
+  type: coffeescript
+  src: "spec/coffeescripts"
+  target: "spec/javascripts"
+-
+  type: haml
   src: "/templates"
   target-file: "/public/templates.js"
-
-scss:
+-
+  type: scss
   src: "/stylesheets"
   target: "/public/stylesheets"

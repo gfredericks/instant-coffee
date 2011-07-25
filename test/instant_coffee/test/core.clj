@@ -51,6 +51,7 @@
     (is (.exists tgt))))
 
 (def-fs-test basic-haml-compile-test
+  (.mkdir (file "templates"))
   (spit (file "templates/foo.js.haml") "%div Fantabulous")
   (-main)
   (is (.exists (file "public/templates.js")))

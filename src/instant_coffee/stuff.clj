@@ -40,7 +40,8 @@
   "Given a configuration map, returns a function that can be called repeatedly
   for watching, or once for build-once."
   [config]
-  (let [fns (for [[k v] config] (subcompiler k v))]
+  (let [fns (for [{type :type, :as m} config]
+              (subcompiler (keyword type) m))]
     (fn []
       (doseq [f fns] (f)))))
 
