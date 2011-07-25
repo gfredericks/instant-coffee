@@ -28,10 +28,6 @@
       (let [path (.getPath file)]
         (.substring path prefix-length)))))
 
-(defn- now
-  []
-  (System/currentTimeMillis))
-
 (defmulti subcompiler
   "Given a keyword (the key in the config file) and an object (the value
   in the config file), returns an iteration function."
@@ -89,7 +85,7 @@
                     (FileUtils/isFileNewer
                       src-file
                       (round-down-milliseconds (last-compiled src-filename))))
-              (let [slurped-at (now),
+              (let [slurped-at (System/currentTimeMillis),
                     src (slurp (file src-dir src-filename)),
                     hashed-src (sha1 src)]
                 (when-not (= hashed-src (last-compiled-value src-filename))
@@ -148,16 +144,20 @@
                       (->> k (re-matches #"(.*?)(\.js\.haml)?") second pr-str)
                       (to-literal v))))
                 "}")))]
-    (format "Templates = %s;" (to-literal nested-compilations))))
+    (to-literal nested-compilations)))
 
 (defmethod subcompiler :haml
   [_ haml-config]
   (let [{src-dir :src, target-filename :target-file} haml-config,
         target-file (file target-filename),
         compilations (atom {})
+        assignment-variable (or (:template-variable haml-config) "Templates"),
         write-to-file
           (fn []
-            (spit target-file (templates-to-js-object-literal @compilations)))]
+            (spit target-file
+              (format "%s = %s;"
+                assignment-variable
+                (templates-to-js-object-literal @compilations))))]
     (file-watcher
       src-dir
       (partial source-files "js.haml" src-dir)
