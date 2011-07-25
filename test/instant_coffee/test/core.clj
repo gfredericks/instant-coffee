@@ -10,7 +10,7 @@
 
 (def-fs-test basic-coffee-compile-test
   (spit (file "coffeescripts/fumble.coffee") "x = 'Wallaby'")
-  (-main [])
+  (-main)
   (doseq [filename ["fumble" "foo" "bar" "baz/booje"]]
     (is (.exists (file "public/javascripts" (str filename ".js"))))))
 
@@ -49,3 +49,9 @@
     (spit tgt "x = 'foo'")
     (Thread/sleep 800)
     (is (.exists tgt))))
+
+(def-fs-test basic-haml-compile-test
+  (spit (file "templates/foo.js.haml") "%div Fantabulous")
+  (-main)
+  (is (.exists (file "public/templates.js")))
+  (is (re-find #"Fantabulous" (slurp (file "public/templates.js")))))
