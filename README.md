@@ -5,6 +5,10 @@ mostly-static projects that want to use CoffeeScript but don't want to depend
 on node.js.  It is packaged as a dependencies-included jar, so it only requires
 the JVM to run.
 
+## Getting Started
+
+Take a look at the `example-project` directory for a README and example setup for getting started. This would be a basic setup for using a framework like [backbone.js](http://documentcloud.github.com/backbone/).
+
 ## Future Features
 
 * SASS/SCSS

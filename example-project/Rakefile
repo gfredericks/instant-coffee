@@ -6,6 +6,12 @@ rescue LoadError
     abort "Jasmine is not available. In order to run jasmine, you must: (sudo) gem install jasmine"
   end
 end
+
+#
+# Note: 
+#   instant_coffee.rake is relative to the instant-coffee project root. 
+#   Be sure to place this where you need it.
+#
 load "../lib/ruby/tasks/instant_coffee.rake"
 
 

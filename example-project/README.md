@@ -14,9 +14,10 @@ To see all the available rake tasks you can run:
 
     rake -T
     
-If you want to take advantage of the 'rake develop' task, we recommend using jruby. This will use native java threads, compiling your coffeescript and serving your tests with the jasmine gem.
+If you want to take advantage of the 'rake develop' task, use jruby. This will use native java threads, compiling your coffeescript and serving your tests with the jasmine gem. --please see the note in the Rakefile regarding file loading if you copy this skeleton app structure elsewhere--
 
     rvm install jruby
     rvm use jruby@myproject --create
     rake develop
     
+navigate to localhost:8888 to see the example spec passing. Happy coffeescripting!
