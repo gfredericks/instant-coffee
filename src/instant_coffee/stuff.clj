@@ -116,7 +116,7 @@
                 (.mkdirs target-dir))
               (print-and-flush (format "Compiling %s..." filename))
               (spit target-file (maybe-compile src hashed-src))
-              (print-and-flush "\n"))
+              (print-and-flush "done!\n"))
             (catch #(and (map? %) (contains? % :compile)) {msg :compile}
               (println "Error! " msg)
               (if (.exists target-file)
