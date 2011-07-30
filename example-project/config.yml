@@ -1,0 +1,18 @@
+---
+source_groups:
+  -
+    type: coffeescript
+    src: "/coffeescripts"
+    target: "/public/javascripts"
+  -
+    type: coffeescript
+    src: "spec/coffeescripts"
+    target: "spec/javascripts"
+  -
+    type: haml
+    src: "/templates"
+    target-file: "/public/templates.js"
+  -
+    type: scss
+    src: "/stylesheets"
+    target: "/public/stylesheets"
