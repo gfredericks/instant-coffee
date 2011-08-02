@@ -12,7 +12,7 @@
   (let [tmp-dir-name (str "/tmp/instant-coffee-test-" (* (rand-int 99999999) (rand-int 99999999))),
         tmp-dir (new File tmp-dir-name)]
     (FileUtils/copyDirectory
-      (new File "test-resources/sample-project")
+      (new File "test-resources/test-project")
       tmp-dir)
     (let [current-root @root-dir]
       (try
