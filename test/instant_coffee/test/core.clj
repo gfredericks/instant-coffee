@@ -57,3 +57,8 @@
   (-main)
   (is (.exists (file "public/templates.js")))
   (is (re-find #"Fantabulous" (slurp (file "public/templates.js")))))
+
+(def-fs-test hidden-files-test
+  (spit (file "coffeescripts/.#emacs-file.coffee") "x = 10")
+  (-main)
+  (is (not (.exists (file "public/javascripts/.#emacs-file.js")))))
