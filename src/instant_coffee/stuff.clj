@@ -26,7 +26,8 @@
   (let [dir-file (file dir),
         prefix-length (inc (count (.getPath dir-file)))]
     (if (.exists dir-file)
-      (for [file (seq (FileUtils/listFiles (file dir) (single-string-array suffix) true))]
+      (for [file (seq (FileUtils/listFiles (file dir) (single-string-array suffix) true)),
+            :when (not (.isHidden file))]
         (let [path (.getPath file)]
           (.substring path prefix-length)))
       [])))
