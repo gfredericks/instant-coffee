@@ -172,30 +172,37 @@
                 "}")))]
     (to-literal nested-compilations)))
 
-(defmethod subcompiler :haml
-  [_ haml-config]
-  (let [{src-dir :src, target-filename :target-file} haml-config,
-        target-file (file target-filename),
-        compilations (atom {})
-        assignment-variable (or (:template-variable haml-config) "Templates"),
-        write-to-file
-          (fn []
-            (spit target-file
-              (format "%s = %s;"
-                assignment-variable
-                (templates-to-js-object-literal @compilations))))]
+(defn- many-to-one-compiler
+  "Creates a compiler for compiling a group of files to a single target file."
+  [src-dir srcs-fn compile-fn write-fn]
+  (let [compilations (atom {})]
     (file-watcher
       src-dir
-      (partial source-files "js.haml" src-dir)
+      srcs-fn
       (fn [filename src]
         (print-and-flush (format "Compiling %s..." filename))
-        (swap! compilations assoc filename (haml/compile-to-js src))
-        (write-to-file)
+        (swap! compilations assoc filename (compile-fn src))
+        (write-fn @compilations)
         (print-and-flush "done!\n"))
       (fn [filename]
         (println (format "Deleting %s..." filename))
         (swap! compilations dissoc filename)
-        (write-to-file)))))
+        (write-fn @compilations)))))
+
+(defmethod subcompiler :haml
+  [_ haml-config]
+  (let [{src-dir :src, target-filename :target-file} haml-config,
+        target-file (file target-filename),
+        assignment-variable (or (:template-variable haml-config) "Templates")]
+    (many-to-one-compiler
+      src-dir
+      (partial source-files "js.haml" src-dir)
+      haml/compile-to-js
+      (fn [compilations]
+        (spit target-file
+          (format "%s = %s;"
+            assignment-variable
+            (templates-to-js-object-literal compilations)))))))
 
 (defmethod subcompiler :scss
   [_ scss-config]
