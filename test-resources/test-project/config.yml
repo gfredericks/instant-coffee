@@ -16,3 +16,7 @@ source_groups:
     type: scss
     src: "/stylesheets"
     target: "/public/stylesheets"
+  -
+    type: coffeescript
+    src: "/cs-requires"
+    target-file: "required.js"

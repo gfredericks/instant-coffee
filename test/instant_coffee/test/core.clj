@@ -62,3 +62,9 @@
   (spit (file "coffeescripts/.#emacs-file.coffee") "x = 10")
   (-main)
   (is (not (.exists (file "public/javascripts/.#emacs-file.js")))))
+
+(def-fs-test single-target-file-test
+  (-main)
+  (let [js (slurp (file "required.js"))]
+    (is (re-find #"Thomas" js))
+    (is (re-find #"mice" js))))
