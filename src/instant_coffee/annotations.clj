@@ -1,6 +1,6 @@
 (ns instant-coffee.annotations
   "Functions for adding/reading metadata from comment-headers of compiled code"
-  (:import java.io.StringWriter)
+  (:import [java.io File StringWriter])
   (:require [clojure.string :as string])
   (:use [clojure.data.json :only (json-str write-json read-json pprint-json)]))
 
@@ -24,7 +24,8 @@
 ; TODO: Allow reading from a file (and don't slurp the whole thing)
 (defn read-annotation
   [comment-prefix code]
-  (let [prefix-length (count comment-prefix),
+  (let [code (if (instance? File code) (slurp code) code),
+        prefix-length (count comment-prefix),
         lines (string/split code #"\n"),
         comment-header
           (take-while #(= comment-prefix (.substring % 0 prefix-length)) lines),
