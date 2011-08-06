@@ -30,4 +30,4 @@
         comment-header
           (take-while #(= comment-prefix (.substring % 0 prefix-length)) lines),
         json (string/join (for [line comment-header] (.substring line prefix-length)))]
-    (read-json json)))
+    (try (read-json json) (catch Exception _ nil))))

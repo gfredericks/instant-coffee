@@ -7,7 +7,8 @@
             [clojure.set :as sets])
   (:use slingshot.core)
   (:use [instant-coffee.config :only [file]]
-        instant-coffee.cache))
+        instant-coffee.cache
+        instant-coffee.annotations))
 
 (defn- print-and-flush
   [s]
@@ -100,6 +101,16 @@
           (swap! last-compiled* dissoc src-filename)
           (delete-handler src-filename))))))
 
+(defn- has-src-hash?
+  "Checks if the target file exists and has the given hash value in its
+  :src-hash metadata."
+  [file hash]
+  (and
+    (.exists file)
+    (let [annotation (read-annotation "////" file)]
+      (and annotation
+           (= hash (:src-hash annotation))))))
+
 (defmethod subcompiler :coffeescript
   [_ coffee-config]
   (let [{src-dir :src, target-dir :target} coffee-config,
@@ -109,19 +120,25 @@
       (partial source-files "coffee" src-dir)
       (fn [filename src]
         (let [target-filename (string/replace filename #"\.coffee$" ".js"),
-              target-file (file target-dir target-filename)]
-          (try+
-            (let [target-dir (.getParentFile target-file),
-                  hashed-src (sha1 src)]
-              (when-not (.exists target-dir)
-                (.mkdirs target-dir))
-              (print-and-flush (format "Compiling %s..." filename))
-              (spit target-file (maybe-compile src hashed-src))
-              (print-and-flush "done!\n"))
-            (catch #(and (map? %) (contains? % :compile)) {msg :compile}
-              (println "Error! " msg)
-              (if (.exists target-file)
-                (.delete target-file))))))
+              target-file (file target-dir target-filename),
+              hashed-src (sha1 src)]
+          (if-not (has-src-hash? target-file hashed-src)
+            (try+
+              (let [target-dir (.getParentFile target-file)]
+                (when-not (.exists target-dir)
+                  (.mkdirs target-dir))
+                (print-and-flush (format "Compiling %s..." filename))
+                (spit target-file
+                      (add-annotation
+                        "////"
+                        (maybe-compile src hashed-src)
+                        {:compiled-by "Instant Coffee",
+                         :src-hash hashed-src}))
+                (print-and-flush "done!\n"))
+              (catch #(and (map? %) (contains? % :compile)) {msg :compile}
+                (println "Error! " msg)
+                (if (.exists target-file)
+                  (.delete target-file)))))))
       (fn [filename]
         (let [target-file-name (string/replace filename #"\.coffee$" ".js")
               target-file (file target-dir target-file-name)]
