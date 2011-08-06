@@ -174,7 +174,7 @@
         (print-and-flush (format "Compiling %s..." filename))
         (swap! compilations assoc filename (haml/compile-to-js src))
         (write-to-file)
-        (print-and-flush "\n"))
+        (print-and-flush "done!\n"))
       (fn [filename]
         (println (format "Deleting %s..." filename))
         (swap! compilations dissoc filename)
