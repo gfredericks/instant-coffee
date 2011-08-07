@@ -1,4 +1,5 @@
 (ns instant-coffee.cache
+  (:use [instant-coffee.config :only [file]])
   (:import java.security.MessageDigest))
 
 (def hexes "0123456789abcdef")
@@ -28,11 +29,20 @@
 (defrecord FSCache [dir]
   ICache
   (cache-get
-    [this key])
+    [this key]
+    (let [good-file (file (str "tmp/ic-cache/" key)),
+          bad-file  (file (str "tmp/ic-cache/" key ".error"))]
+      (cond
+        (.exists good-file)
+          {:code (slurp good-file)}
+        (.exists bad-file)
+          {:error (slurp bad-file)})))
   (cache-set
-    [this key value])
+    [this key value]
+    (spit (file (str "tmp/ic-cache/" key)) value))
   (cache-set-error
-    [this key error-msg]))
+    [this key error-msg]
+    (spit (file (str "tmp/ic-cache/" key ".error")) error-msg)))
 
 (defrecord
   #^{:doc "Argument 'mem' should be an atom initialized to an empty map."}
@@ -49,3 +59,8 @@
     (swap! mem assoc key {:error error-msg})))
 
 (defn create-memcache [] (new MemCache (atom {})))
+
+(defn create-fs-cache
+  []
+  (.mkdirs (file "tmp/ic-cache"))
+  (new FSCache nil))
