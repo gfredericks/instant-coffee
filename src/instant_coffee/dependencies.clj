@@ -4,6 +4,25 @@
   (:require [instant-coffee.annotations :as ann]
             [clojure.string :as string]))
 
+(defn- add-newlines
+  [lines]
+  (apply str (for [line lines] (str line "\n"))))
+
+(defn- to-block-comment
+  [& lines]
+  (let [asterisks (fn [n] (apply str (repeat n "*"))),
+        line-length (apply max (map count lines))]
+    (add-newlines
+      (concat
+        [(str "/**" (asterisks line-length) "**")]
+        (for [line lines]
+          (str
+            " * "
+            line
+            (apply str (repeat (- line-length (count line)) " "))
+            " *"))
+        [(str " **" (asterisks line-length) "**/")]))))
+
 (defn- ensure-coffee-suffix
   [filename]
   (if (re-matches #".*\.coffee" filename)
@@ -44,10 +63,9 @@
   in the comment header."
   [compilations]
   (let [with-requirements (zipmap (keys compilations) (->> compilations vals (map requirements)))]
-    (string/join "\n\n"
+    (string/join "\n\n\n"
       (for [filename (topologically-sort with-requirements)]
-        (str "/************\n"
-             " * BEGIN FILE\n"
-             " * " filename "\n"
-             " ************/\n"
-             (compilations filename))))))
+        (str (to-block-comment "BEGIN FILE" filename)
+             (compilations filename)
+             "\n"
+             (to-block-comment "END FILE" filename))))))
