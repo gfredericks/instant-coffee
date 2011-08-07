@@ -165,14 +165,13 @@
                   (print-and-flush "done!\n"))
                 (catch #(and (map? %) (contains? % :compile)) {msg :compile}
                   (println "Error! " msg)
-                  (if (.exists target-file)
-                    (.delete target-file)))))))
+                  (FileUtils/deleteQuietly target-file))))))
         (fn [filename]
           (let [target-file-name (string/replace filename #"\.coffee$" ".js"),
                 target-file (file target-dir target-file-name)]
             (when (.exists target-file)
               (println (format "Deleting %s..." target-file-name))
-              (.delete target-file)))))
+              (FileUtils/deleteQuietly target-file)))))
       (let [target-file (file (:target-file coffee-config))]
         (many-to-one-compiler
           src-dir
@@ -185,7 +184,7 @@
                 (spit target-file js))
               (catch #{:circular-dependency} _
                 (println "Circular dependency detected! Deleting target file...")
-                (.delete target-file)))))))))
+                (FileUtils/deleteQuietly target-file)))))))))
 
 (defn- templates-to-js-object-literal
   "Takes a map from relative filenames to function-literal-strings,
