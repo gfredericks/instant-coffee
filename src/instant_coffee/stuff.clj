@@ -121,9 +121,9 @@
         (print-and-flush (format "Compiling %s..." filename))
         (try+
           (let [compiled (compile-fn src)]
-          (swap! compilations assoc filename compiled)
-          (write-fn @compilations)
-          (print-and-flush "done!\n"))
+            (swap! compilations assoc filename compiled)
+            (write-fn @compilations)
+            (print-and-flush "done!\n"))
           (catch #(and (map? %) (contains? % :compile)) {msg :compile}
             (println "Error! " msg))))
       (fn [filename]
