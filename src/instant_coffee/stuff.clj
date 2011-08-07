@@ -1,14 +1,13 @@
 (ns instant-coffee.stuff
   (:require [instant-coffee.jcoffeescript :as jc]
-            [instant-coffee.haml-js :as haml])
+            [instant-coffee.haml-js :as haml]
+            [instant-coffee.annotations :as ann])
   (:import org.apache.commons.io.FileUtils)
   (:import org.jcoffeescript.JCoffeeScriptCompileException)
   (:require [clojure.string :as string]
             [clojure.set :as sets])
   (:use slingshot.core)
-  (:use [instant-coffee.config :only [file]]
-        instant-coffee.cache
-        instant-coffee.annotations))
+  (:use [instant-coffee [config :only [file]] cache annotations dependencies]))
 
 (defn- print-and-flush
   [s]
@@ -51,6 +50,16 @@
   [m]
   (- m (rem m 1000) 1))
 
+(defn- compile-coffeescript-with-metadata
+  "Compiles coffeescript, passing any comment-header annotations from the
+  source to the target code."
+  [src]
+  (let [data (ann/read-annotation "#" src),
+        js (jc/compile-coffee src)]
+    (if data
+      (ann/add-annotation "////" js data)
+      js)))
+
 (defn- create-cached-coffeescript-compiler
   []
   (let [cache (create-memcache)]
@@ -63,7 +72,7 @@
             (throw+ {:compile (:error v)})
           :else
             (try
-              (let [v (jc/compile-coffee src)]
+              (let [v (compile-coffeescript-with-metadata src)]
                 (cache-set cache src-hash v)
                 v)
               (catch JCoffeeScriptCompileException e
@@ -159,7 +168,7 @@
                   (if (.exists target-file)
                     (.delete target-file)))))))
         (fn [filename]
-          (let [target-file-name (string/replace filename #"\.coffee$" ".js")
+          (let [target-file-name (string/replace filename #"\.coffee$" ".js"),
                 target-file (file target-dir target-file-name)]
             (when (.exists target-file)
               (println (format "Deleting %s..." target-file-name))
@@ -171,10 +180,12 @@
           (fn [src]
             (maybe-compile src (sha1 src)))
           (fn [compilations]
-            (->> compilations
-              (vals)
-              (string/join "\n")
-              (spit target-file))))))))
+            (try+
+              (let [js (join-with-dependency-resolutions compilations)]
+                (spit target-file js))
+              (catch #{:circular-dependency} _
+                (println "Circular dependency detected! Deleting target file...")
+                (.delete target-file)))))))))
 
 (defn- templates-to-js-object-literal
   "Takes a map from relative filenames to function-literal-strings,
