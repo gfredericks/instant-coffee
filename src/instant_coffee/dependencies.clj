@@ -19,19 +19,25 @@
     (map ensure-coffee-suffix)))
 
 (defn- topologically-sort
+  "This is just an algorithm I more or less read off of wikipedia. You
+  simply pull sink nodes off the DAG until it's empty. Easy peasy."
   [dependencies]
   (loop [sorted [], dependencies dependencies]
     (if (empty? dependencies)
       sorted
-      (let [no-reqs (first (filter #(empty? (dependencies %)) (keys dependencies))),
-            rem-keys (remove #{no-reqs} (keys dependencies))]
-        (if no-reqs
+      (let [no-reqs
+              (->> dependencies
+                (keys)
+                (filter #(empty? (dependencies %)))
+                (set)),
+            rem-keys (remove no-reqs (keys dependencies))]
+        (if (empty? no-reqs)
+          (throw+ :circular-dependency)
           (recur
-            (conj sorted no-reqs)
+            (apply conj sorted no-reqs)
             (zipmap
               rem-keys
-              (for [k rem-keys] (remove #{no-reqs} (dependencies k)))))
-          (throw+ :circular-dependency))))))
+              (for [k rem-keys] (remove no-reqs (dependencies k))))))))))
 
 (defn join-with-dependency-resolutions
   "Input is a map from filenames to compiled javascript with requirements
