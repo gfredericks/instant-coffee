@@ -63,6 +63,9 @@
   in the comment header."
   [compilations]
   (let [with-requirements (zipmap (keys compilations) (->> compilations vals (map requirements)))]
+    (doseq [filename (keys with-requirements), dep (with-requirements filename)]
+      (if-not (contains? with-requirements dep)
+        (println (format "WARNING: Bad dependency declaration %s in %s." (pr-str dep) (pr-str filename)))))
     (string/join "\n\n\n"
       (for [filename (topologically-sort with-requirements)]
         (str (to-block-comment "BEGIN FILE" filename)

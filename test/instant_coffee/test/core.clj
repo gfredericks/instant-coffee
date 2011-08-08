@@ -79,7 +79,7 @@
     (is (re-find #"mice" js))))
 
 (def-watcher-test coffeescript-requires-test
-  (Thread/sleep 700)
+  (Thread/sleep 2200)
   (let [contains-in-order?
           (fn [s & ss]
             (let [s (string/join " " (string/split s #"\n"))]
@@ -102,3 +102,9 @@
     (spit f2 "bar2=3")
     (Thread/sleep 700)
     (is (contains-in-order? (slurp t) "bar2" "bar1"))))
+
+(def-watcher-test requirement-warning-test
+  (let [f1 (file "cs-requires/foo.coffee")]
+    (spit f1 "# {\"requires\": [\"barmaid\"]}\nx = y = z = 12")
+    (Thread/sleep 1750)
+    (check-and-clear-output #"WARNING.*Bad dependency declaration")))
