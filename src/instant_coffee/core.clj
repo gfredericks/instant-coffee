@@ -22,7 +22,13 @@
   (try
     (loop []
       (when-not (= :quit @watcher-status)
-        (iteration)
+        (try
+          (iteration)
+          (catch Throwable t
+            (println "Unexpected error!")
+            (println t)
+            (.printStackTrace t)
+            (throw t)))
         (Thread/sleep 250)
         (recur)))
     (reset! watcher-status nil)

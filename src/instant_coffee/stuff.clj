@@ -62,7 +62,7 @@
 
 (defn- create-cached-coffeescript-compiler
   []
-  (let [cache (create-memcache)]
+  (let [cache (create-fs-cache)]
     (fn [src src-hash]
       (let [v (cache-get cache src-hash)]
         (cond
@@ -119,9 +119,13 @@
       srcs-fn
       (fn [filename src]
         (print-and-flush (format "Compiling %s..." filename))
-        (swap! compilations assoc filename (compile-fn src))
-        (write-fn @compilations)
-        (print-and-flush "done!\n"))
+        (try+
+          (let [compiled (compile-fn src)]
+            (swap! compilations assoc filename compiled)
+            (write-fn @compilations)
+            (print-and-flush "done!\n"))
+          (catch #(and (map? %) (contains? % :compile)) {msg :compile}
+            (println "Error! " msg))))
       (fn [filename]
         (println (format "Deleting %s..." filename))
         (swap! compilations dissoc filename)

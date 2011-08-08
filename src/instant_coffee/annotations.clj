@@ -21,6 +21,12 @@
   [comment-prefix code-string data]
   (str (comment-header comment-prefix data) code-string))
 
+(defn- prefix?
+  [s pre]
+  (and
+    (>= (.length s) (.length pre))
+    (= pre (.substring s 0 (.length pre)))))
+
 ; TODO: Allow reading from a file (and don't slurp the whole thing)
 (defn read-annotation
   [comment-prefix code]
@@ -28,6 +34,6 @@
         prefix-length (count comment-prefix),
         lines (string/split code #"\n"),
         comment-header
-          (take-while #(= comment-prefix (.substring % 0 prefix-length)) lines),
+          (take-while #(prefix? % comment-prefix) lines),
         json (string/join (for [line comment-header] (.substring line prefix-length)))]
     (try (read-json json) (catch Exception _ nil))))
