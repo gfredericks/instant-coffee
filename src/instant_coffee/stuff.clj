@@ -86,29 +86,51 @@
   it. The second takes a filename, and is called when the file has been deleted.
   file-watcher returns a function that, when invoked, will fetch the files and
   call file-handler for any files which have changed since the last time
-  file-handler was called."
-  [src-dir file-finder change-handler delete-handler]
+  file-handler was called.
+
+  An initialization function can be passed as an optional final argument. This
+  changes the behavior the first time the file-watcher is called -- instead
+  of calling the change-handler for each file it finds, it will call the
+  initalization function a single time, passing it a map from src-names to src.
+  The motivation for this was to keep the dependency-resolution piece from
+  detecting and reporting bad requirements at startup as the files are loaded
+  in one by one."
+  [src-dir file-finder change-handler delete-handler & [initialize]]
   (let [last-compiled* (atom {}),
         last-compiled (fn [filename] (-> last-compiled* deref (get filename) first)),
-        last-compiled-value (fn [filename] (-> last-compiled* deref (get filename) second))]
+        last-compiled-value (fn [filename] (-> last-compiled* deref (get filename) second)),
+        initialized (atom false)]
     (fn []
       (let [srcs (set (file-finder))
             deleted-srcs (sets/difference (-> last-compiled* deref keys set) srcs)]
-        (doseq [src-filename srcs]
-          (let [src-file (file src-dir src-filename)]
-            (when (or (nil? (last-compiled src-filename))
-                    (FileUtils/isFileNewer
-                      src-file
-                      (round-down-milliseconds (last-compiled src-filename))))
-              (let [slurped-at (System/currentTimeMillis),
-                    src (slurp (file src-dir src-filename)),
-                    hashed-src (sha1 src)]
-                (when-not (= hashed-src (last-compiled-value src-filename))
-                  (swap! last-compiled* assoc src-filename [slurped-at hashed-src])
-                  (change-handler src-filename src))))))
-        (doseq [src-filename deleted-srcs]
-          (swap! last-compiled* dissoc src-filename)
-          (delete-handler src-filename))))))
+        (if (and initialize (not @initialized))
+          (let [src-map
+                  (reduce
+                    (fn [m src-filename]
+                      (let [slurped-at (System/currentTimeMillis),
+                            src (slurp (file src-dir src-filename)),
+                            hashed-src (sha1 src)]
+                        (swap! last-compiled* assoc src-filename [slurped-at hashed-src])
+                        (assoc m src-filename src)))
+                    {}
+                    srcs)]
+            (initialize src-map))
+          (do
+            (doseq [src-filename srcs]
+              (let [src-file (file src-dir src-filename)]
+                (when (or (nil? (last-compiled src-filename))
+                        (FileUtils/isFileNewer
+                          src-file
+                          (round-down-milliseconds (last-compiled src-filename))))
+                  (let [slurped-at (System/currentTimeMillis),
+                        src (slurp (file src-dir src-filename)),
+                        hashed-src (sha1 src)]
+                    (when-not (= hashed-src (last-compiled-value src-filename))
+                      (swap! last-compiled* assoc src-filename [slurped-at hashed-src])
+                      (change-handler src-filename src))))))
+            (doseq [src-filename deleted-srcs]
+              (swap! last-compiled* dissoc src-filename)
+              (delete-handler src-filename))))))))
 
 (defn- many-to-one-compiler
   "Creates a compiler for compiling a group of files to a single target file."
