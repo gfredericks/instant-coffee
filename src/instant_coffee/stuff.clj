@@ -151,7 +151,19 @@
       (fn [filename]
         (println (format "Deleting %s..." filename))
         (swap! compilations dissoc filename)
-        (write-fn @compilations)))))
+        (write-fn @compilations))
+      (fn [srcs]
+        (doseq [[filename src] srcs]
+          (print-and-flush (format "Compiling %s..." filename))
+          (try+
+            (let [compiled (compile-fn src)]
+              (swap! compilations assoc filename compiled)
+              (print-and-flush "\n"))
+            (catch #(and (map? %) (contains? % :compile)) {msg :compile}
+              (println "Error! " msg))))
+        (when-not (empty? @compilations)
+          (write-fn @compilations)
+          (println "Done!"))))))
 
 (defn- has-src-hash?
   "Checks if the target file exists and has the given hash value in its
