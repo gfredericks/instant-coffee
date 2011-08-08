@@ -92,7 +92,7 @@
         t  (file "required.js")]
     (spit f1 "# {\"requires\": [\"foo2\"]}\nbar1=12")
     (spit f2 "bar2=5")
-    (Thread/sleep 700)
+    (Thread/sleep 1100)
     (is (contains-in-order? (slurp t) "bar2" "bar1"))
     (spit f1 "bar1=4")
     (spit f2 "# {\"requires\": [\"foo1\"]}\nbar2=3")

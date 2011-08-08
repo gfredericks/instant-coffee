@@ -114,7 +114,8 @@
                         (assoc m src-filename src)))
                     {}
                     srcs)]
-            (initialize src-map))
+            (initialize src-map)
+            (reset! initialized true))
           (do
             (doseq [src-filename srcs]
               (let [src-file (file src-dir src-filename)]
