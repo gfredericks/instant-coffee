@@ -90,6 +90,14 @@
         (catch JCoffeeScriptCompileException e
           {:error (.getMessage e)})))))
 
+(def create-cached-haml-compiler
+  (partial create-cached-compiler
+    (fn [src]
+      (try
+        {:code (haml/compile-to-js src)}
+        (catch Exception e
+          {:error (.getMessage e)})))))
+
 (defn- file-watcher
   "Takes three functions -- a file finder (a nullary function that returns a
   list of filenames) and two file-handlers. The first handler is a two-arg
@@ -270,7 +278,8 @@
     (many-to-one-compiler
       src-dir
       (partial source-files "js.haml" src-dir)
-      haml/compile-to-js
+      (let [cc (create-cached-haml-compiler)]
+        (fn [src] (cc src (sha1 src))))
       (fn [compilations]
         (spit target-file
           (format "%s = %s;"
