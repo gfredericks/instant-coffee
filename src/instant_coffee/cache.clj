@@ -1,5 +1,5 @@
 (ns instant-coffee.cache
-  (:use [instant-coffee.config :only [file]])
+  (:use [instant-coffee.config :only [file *global-config*]])
   (:import java.security.MessageDigest))
 
 (def hexes "0123456789abcdef")
@@ -62,5 +62,7 @@
 
 (defn create-fs-cache
   []
+  ; calling (file) doesn't work for absolute filepaths yet. Figure that out.
+  (let [f (file (or (:cache_dir *global-config*) "tmp/ic-cache"))])
   (.mkdirs (file "tmp/ic-cache"))
   (new FSCache nil))

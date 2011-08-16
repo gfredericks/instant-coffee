@@ -10,9 +10,15 @@
   [& path-elements]
   (new File @root-dir (string/join "/" path-elements)))
 
+(def DEFAULT-CONFIG-FILE-LOCATIONS
+  ["config.yml"
+   "config/instant_coffee.yml"])
+
 (defn read-config-file
   []
-  (let [f (first (filter #(.exists %) [(file "config.yml") (file "config/instant_coffee.yml")]))]
+  (let [f (first (filter #(.exists %) (map file DEFAULT-CONFIG-FILE-LOCATIONS)))]
     (if f
       (yaml/parse-string (slurp f))
       (throw+ :missing-config))))
+
+(def *global-config* nil)
