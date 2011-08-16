@@ -60,8 +60,10 @@
       (ann/add-annotation "////" js data)
       js)))
 
-(defn- create-cached-coffeescript-compiler
-  []
+(defn- create-cached-compiler
+  "input compiler function should take src as input and return either
+  {:code <string>} or {:error <string>}"
+  [compiler]
   (let [cache (create-fs-cache)]
     (fn [src src-hash]
       (let [v (cache-get cache src-hash)]
@@ -71,13 +73,22 @@
           (:error v)
             (throw+ {:compile (:error v)})
           :else
-            (try
-              (let [v (compile-coffeescript-with-metadata src)]
-                (cache-set cache src-hash v)
-                v)
-              (catch JCoffeeScriptCompileException e
-                (cache-set-error cache src-hash (.getMessage e))
-                (throw+ {:compile (.getMessage e)}))))))))
+            (let [v (compiler src)]
+              (if-let [e (:error v)]
+                (do
+                  (cache-set-error cache src-hash e)
+                  (throw+ {:compile e}))
+                (do
+                  (cache-set cache src-hash (:code v))
+                  (:code v)))))))))
+
+(def create-cached-coffeescript-compiler
+  (partial create-cached-compiler
+    (fn [src]
+      (try
+        {:code (compile-coffeescript-with-metadata src)}
+        (catch JCoffeeScriptCompileException e
+          {:error (.getMessage e)})))))
 
 (defn- file-watcher
   "Takes three functions -- a file finder (a nullary function that returns a
