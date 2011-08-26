@@ -244,32 +244,6 @@
                 (println "Circular dependency detected! Deleting target file...")
                 (FileUtils/deleteQuietly target-file)))))))))
 
-(defn- templates-to-js-object-literal
-  "Takes a map from relative filenames to function-literal-strings,
-  and produces an object literal, where nested directories are mapped
-  to nested properties."
-  [compilations]
-  (let [nested-compilations
-          (reduce
-            (fn [m [filename js]]
-              (assoc-in m (string/split filename #"/") js))
-            {}
-            compilations),
-        to-literal
-          (fn to-literal
-            [m]
-            (if (string? m)
-              m
-              (str
-                "{"
-                (string/join ","
-                  (for [[k v] m]
-                    (format "%s : %s"
-                      (->> k (re-matches #"(.*?)(\.js\.haml)?") second pr-str)
-                      (to-literal v))))
-                "}")))]
-    (to-literal nested-compilations)))
-
 (defmethod subcompiler :haml
   [_ haml-config]
   (let [{src-dir :src, target-filename :target-file} haml-config,
@@ -282,9 +256,7 @@
         (fn [src] (cc src (sha1 src))))
       (fn [compilations]
         (spit target-file
-          (format "%s = %s;"
-            assignment-variable
-            (templates-to-js-object-literal compilations)))))))
+          (haml/combine-compilations compilations assignment-variable))))))
 
 (defmethod subcompiler :scss
   [_ scss-config]
