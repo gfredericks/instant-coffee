@@ -33,6 +33,7 @@ var Haml;
   var matchers, self_close_tags, embedder, forceXML, escaperName, escapeHtmlByDefault;
 
   escaperName = "_escape_html";
+  escapeHtmlByDefault = true;
 
   function html_escape(text) {
     return (text + "").
