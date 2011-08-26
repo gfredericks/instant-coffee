@@ -26,23 +26,36 @@
   (cache-set       [this key value] "Sets the you know whatever.")
   (cache-set-error [this key error-msg]))
 
+(defn- good-file
+  [key]
+  (file (format "tmp/ic-cache/%s/%s"
+                (.substring key 0 2)
+                (.substring key 2))))
+(defn- bad-file
+  [key]
+  (file (format "tmp/ic-cache/%s/%s.error"
+                (.substring key 0 2)
+                (.substring key 2))))
+
 (defrecord FSCache [dir]
   ICache
   (cache-get
     [this key]
-    (let [good-file (file (str "tmp/ic-cache/" key)),
-          bad-file  (file (str "tmp/ic-cache/" key ".error"))]
-      (cond
-        (.exists good-file)
-          {:code (slurp good-file)}
-        (.exists bad-file)
-          {:error (slurp bad-file)})))
+    (cond
+      (.exists (good-file key))
+        {:code (slurp (good-file key))}
+      (.exists (bad-file key))
+        {:error (slurp (bad-file key))}))
   (cache-set
     [this key value]
-    (spit (file (str "tmp/ic-cache/" key)) value))
+    (let [f (good-file key)]
+      (.mkdirs (.getParentFile f))
+      (spit f value)))
   (cache-set-error
     [this key error-msg]
-    (spit (file (str "tmp/ic-cache/" key ".error")) error-msg)))
+    (let [f (bad-file key)]
+      (.mkdirs (.getParentFile f))
+      (spit f error-msg))))
 
 (defrecord
   #^{:doc "Argument 'mem' should be an atom initialized to an empty map."}
