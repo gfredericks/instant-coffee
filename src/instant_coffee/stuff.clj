@@ -152,6 +152,42 @@
               (swap! last-compiled* dissoc src-filename)
               (delete-handler src-filename))))))))
 
+(defn- one-to-one-compiler
+  [src-dir
+   extension
+   target-dir
+   target-extension
+   compiler-fn]
+  (let [filename-converter
+          (fn [filename]
+            (string/replace
+              filename
+              (re-pattern (str "\\." extension "$"))
+              (str "." target-extension)))]
+    (file-watcher
+      src-dir
+      (partial source-files extension src-dir)
+      (fn [filename src]
+        (let [target-file (file target-dir (filename-converter filename)),
+              hashed-src (sha1 src)]
+          (try+
+            (let [target-dir (.getParentFile target-file)]
+              (when-not (.exists target-dir)
+                (.mkdirs target-dir))
+              (print-and-flush (format "Compiling %s..." filename))
+              (spit target-file
+                    (compiler-fn src hashed-src))
+              (print-and-flush "done!\n"))
+            (catch #(and (map? %) (contains? % :compile)) {msg :compile}
+              (println "Error! " msg)
+              (FileUtils/deleteQuietly target-file)))))
+      (fn [filename]
+        (let [target-filename (filename-converter filename),
+              target-file (file target-dir target-filename)]
+          (when (.exists target-file)
+            (println (format "Deleting %s..." target-filename))
+            (FileUtils/deleteQuietly target-file)))))))
+
 (defn- many-to-one-compiler
   "Creates a compiler for compiling a group of files to a single target file."
   [src-dir srcs-fn compile-fn write-fn]
@@ -201,35 +237,12 @@
         maybe-compile (create-cached-coffeescript-compiler),
         srcs-fn (partial source-files "coffee" src-dir)]
     (if target-dir
-      (file-watcher
+      (one-to-one-compiler
         src-dir
-        srcs-fn
-        (fn [filename src]
-          (let [target-filename (string/replace filename #"\.coffee$" ".js"),
-                target-file (file target-dir target-filename),
-                hashed-src (sha1 src)]
-            (if-not (has-src-hash? target-file hashed-src)
-              (try+
-                (let [target-dir (.getParentFile target-file)]
-                  (when-not (.exists target-dir)
-                    (.mkdirs target-dir))
-                  (print-and-flush (format "Compiling %s..." filename))
-                  (spit target-file
-                        (add-annotation
-                          "////"
-                          (maybe-compile src hashed-src)
-                          {:compiled-by "Instant Coffee",
-                           :src-hash hashed-src}))
-                  (print-and-flush "done!\n"))
-                (catch #(and (map? %) (contains? % :compile)) {msg :compile}
-                  (println "Error! " msg)
-                  (FileUtils/deleteQuietly target-file))))))
-        (fn [filename]
-          (let [target-file-name (string/replace filename #"\.coffee$" ".js"),
-                target-file (file target-dir target-file-name)]
-            (when (.exists target-file)
-              (println (format "Deleting %s..." target-file-name))
-              (FileUtils/deleteQuietly target-file)))))
+        "coffee"
+        target-dir
+        "js"
+        maybe-compile)
       (let [target-file (file (:target-file coffee-config))]
         (many-to-one-compiler
           src-dir
