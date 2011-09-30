@@ -13,7 +13,7 @@ source_groups:
     src: "/templates"
     target-file: "/public/templates.js"
   -
-    type: scss
+    type: sass
     src: "/stylesheets"
     target: "/public/stylesheets"
   -

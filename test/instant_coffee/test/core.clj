@@ -67,6 +67,13 @@
   (is (.exists (file "public/templates.js")))
   (is (re-find #"Fantabulous" (slurp (file "public/templates.js")))))
 
+(def-fs-test basic-sass-compile-test
+  (.mkdir (file "stylesheets"))
+  (spit (file "stylesheets/foo.sass") "h5\n  font-size: larger")
+  (run-main)
+  (is (.exists (file "public/stylesheets/foo.css")))
+  (is (re-find #"larger" (slurp (file "public/stylesheets/foo.css")))))
+
 (def-fs-test hidden-files-test
   (spit (file "coffeescripts/.#emacs-file.coffee") "x = 10")
   (run-main)
