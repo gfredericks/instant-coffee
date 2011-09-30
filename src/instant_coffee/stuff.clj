@@ -1,7 +1,9 @@
 (ns instant-coffee.stuff
-  (:require [instant-coffee.jcoffeescript :as jc]
-            [instant-coffee.haml-js :as haml]
-            [instant-coffee.annotations :as ann])
+  (:require (instant-coffee
+              [jcoffeescript :as jc]
+              [haml-js :as haml]
+              [annotations :as ann]
+              [sass :as sass]))
   (:import org.apache.commons.io.FileUtils)
   (:import org.jcoffeescript.JCoffeeScriptCompileException)
   (:require [clojure.string :as string]
@@ -95,6 +97,14 @@
     (fn [src]
       (try
         {:code (haml/compile-to-js src)}
+        (catch Exception e
+          {:error (.getMessage e)})))))
+
+(def create-cached-sass-compiler
+  (partial create-cached-compiler
+    (fn [src]
+      (try
+        {:code (sass/compile-sass src)}
         (catch Exception e
           {:error (.getMessage e)})))))
 
@@ -271,9 +281,15 @@
         (spit target-file
           (haml/combine-compilations compilations assignment-variable))))))
 
-(defmethod subcompiler :scss
-  [_ scss-config]
-  (constantly nil))
+(defmethod subcompiler :sass
+  [_ sass-config]
+  (let [{src-dir :src, target-dir :target} sass-config]
+    (one-to-one-compiler
+      src-dir
+      "sass"
+      target-dir
+      "css"
+      (create-cached-sass-compiler))))
 
 (defmethod subcompiler :default
   [k v]
