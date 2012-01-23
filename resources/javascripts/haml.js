@@ -225,7 +225,22 @@ var Haml;
             var leader0 = attribs._content.charAt(0),
                 leader1 = attribs._content.charAt(1),
                 leaderLength = 0;
-            whitespace.around = true;
+                
+            if(leader0 == "<"){
+              leaderLength++;
+              whitespace.inside = true;
+              if(leader1 == ">"){
+                leaderLength++;
+                whitespace.around = true;
+              }
+            }else if(leader0 == ">"){
+              leaderLength++;
+              whitespace.around = true;
+              if(leader1 == "<"){
+                leaderLength++;
+                whitespace.inside = true;
+              }
+            }
             attribs._content = attribs._content.substr(leaderLength);
             //once we've identified the tag and its attributes, the rest is content.
             // this is currently trimmed for neatness.
@@ -503,56 +518,52 @@ var Haml;
       // Match plain text
       if (!found) {
         output.push(function () {
-          var s = function(){
-            // Escaped plain text
-            if (line[0] === '\\') {
-              return parse_interpol(line.substr(1, line.length));
-            }
+          // Escaped plain text
+          if (line[0] === '\\') {
+            return parse_interpol(line.substr(1, line.length));
+          }
 
 
-            function escapedLine(){
-              try {
-                return escaperName+'('+JSON.stringify(JSON.parse(line)) +')';
-              } catch (e2) {
-                return escaperName+'(' + line + ')';
-              }
+          function escapedLine(){
+            try {
+              return escaperName+'('+JSON.stringify(JSON.parse(line)) +')';
+            } catch (e2) {
+              return escaperName+'(' + line + ')';
             }
+          }
           
-            function unescapedLine(){
-              try {
-                return parse_interpol(JSON.parse(line));
-              } catch (e) {
-                return line;
-              }
+          function unescapedLine(){
+            try {
+              return parse_interpol(JSON.parse(line));
+            } catch (e) {
+              return line;
             }
+          }
           
-            // always escaped
-            if((line.substr(0, 2) === "&=")) {
-              line = line.substr(2, line.length).trim();
+          // always escaped
+          if((line.substr(0, 2) === "&=")) {
+            line = line.substr(2, line.length).trim();
+            return escapedLine();
+          }
+          
+          //never escaped
+          if((line.substr(0, 2) === "!=")) {
+            line = line.substr(2, line.length).trim();
+            return unescapedLine();
+          }
+          
+          // sometimes escaped
+          if ( (line[0] === '=')) {
+            line = line.substr(1, line.length).trim();
+            if(escapeHtmlByDefault){
               return escapedLine();
-            }
-          
-            //never escaped
-            if((line.substr(0, 2) === "!=")) {
-              line = line.substr(2, line.length).trim();
+            }else{
               return unescapedLine();
             }
-          
-            // sometimes escaped
-            if ( (line[0] === '=')) {
-              line = line.substr(1, line.length).trim();
-              if(escapeHtmlByDefault){
-                return escapedLine();
-              }else{
-                return unescapedLine();
-              }
-            }
+          }
 
-            // Plain text
-            return parse_interpol(line);
-          }();
-          if(s[0] != "\"")throw "fuggggg";
-          return "\" " + s.substr(1, s.length);
+          // Plain text
+          return parse_interpol(line);
         }());
       }
 
@@ -561,7 +572,7 @@ var Haml;
       output.push(block.process());
     }
     
-    var txt = output.filter(function (part) { return part && part.length > 0}).join(" +\n");
+    var txt = output.filter(function (part) { return part && part.length > 0}).join(" + \" \" +\n");
     if(txt.length == 0){
       txt = '""';
     }

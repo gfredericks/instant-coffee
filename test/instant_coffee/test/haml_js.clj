@@ -11,4 +11,4 @@
 
 (deftest whitespace-test
   (let [js (compile-haml "%div\n  I have\n  a pet")]
-    (is (re-find #"have\s+a" js))))
+    (is (not (re-find #"havea" js)))))
