@@ -572,7 +572,7 @@ var Haml;
       output.push(block.process());
     }
     
-    var txt = output.filter(function (part) { return part && part.length > 0}).join(" +\n");
+    var txt = output.filter(function (part) { return part && part.length > 0}).join(" + \" \" +\n");
     if(txt.length == 0){
       txt = '""';
     }

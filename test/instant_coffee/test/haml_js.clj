@@ -7,5 +7,8 @@
 
 (deftest attribute-expressions-test
   (let [js (compile-haml "%span(foo=bar)")]
-    ; (is (= js "\"<span foo=\\\"\" + (function(x){return x;})(bar) + \"\\\">\" + \n\"</span>\""))))
     (is (re-find #"\"<span foo=\\\"\" \+ _escape_html\(bar\) \+ \"\\\">\" \+ \n\"</span>\"" js))))
+
+(deftest whitespace-test
+  (let [js (compile-haml "%div\n  I have\n  a pet")]
+    (is (not (re-find #"havea" js)))))

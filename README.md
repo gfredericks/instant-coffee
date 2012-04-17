@@ -9,6 +9,11 @@ the JVM to run.
 
 Take a look at the `example-project` directory for a README and example setup for getting started. This would be a basic setup for using a framework like [backbone.js](http://documentcloud.github.com/backbone/).
 
+## Haml-js
+
+Instant coffee uses a slightly modified version of the haml-js project. The primary
+difference is that whitespace is added between sibling elements.
+
 ## Future Features
 
 * SASS/SCSS
